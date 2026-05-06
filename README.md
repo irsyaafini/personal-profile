@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🔬 EpiPortfolio — Epidemiologist Portfolio Website
 
 A full-stack, production-ready portfolio website for public health professionals, built with React + Supabase.
@@ -155,3 +156,6 @@ The `netlify.toml` handles SPA redirect rules automatically.
 | `/admin/publications` | CRUD publications |
 | `/admin/messages` | View & manage messages |
 | `/admin/profile` | Edit portfolio profile |
+=======
+# epidemiology-portofolio
+>>>>>>> bf450cb98fc2e68bd4601c8cfba42b9be5f349f2
