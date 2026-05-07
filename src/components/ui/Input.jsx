@@ -1,72 +1,28 @@
-/**
- * Reusable Input field component
- * @param {{
- *   label?: string,
- *   id: string,
- *   error?: string,
- *   className?: string,
- *   [key: string]: any
- * }} props
- */
-export function Input({ label, id, error, className = '', ...rest }) {
+import { cn } from '@/utils'
+
+export function Input({ className = '', error = false, ...props }) {
   return (
-    <div className="flex flex-col gap-1">
-      {label && (
-        <label htmlFor={id} className="label-field">
-          {label}
-        </label>
-      )}
-      <input
-        id={id}
-        className={`input-field ${error ? 'border-red-400 focus:ring-red-400' : ''} ${className}`}
-        {...rest}
-      />
-      {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
-    </div>
+    <input
+      className={cn('field', error && 'field-error', className)}
+      {...props}
+    />
   )
 }
 
-/**
- * Reusable Textarea component
- */
-export function Textarea({ label, id, error, className = '', rows = 4, ...rest }) {
+export function Textarea({ className = '', error = false, rows = 5, ...props }) {
   return (
-    <div className="flex flex-col gap-1">
-      {label && (
-        <label htmlFor={id} className="label-field">
-          {label}
-        </label>
-      )}
-      <textarea
-        id={id}
-        rows={rows}
-        className={`input-field resize-none ${error ? 'border-red-400' : ''} ${className}`}
-        {...rest}
-      />
-      {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
-    </div>
+    <textarea
+      rows={rows}
+      className={cn('field resize-y', error && 'field-error', className)}
+      {...props}
+    />
   )
 }
 
-/**
- * Reusable Select component
- */
-export function Select({ label, id, error, children, className = '', ...rest }) {
+export function Label({ children, htmlFor, className = '' }) {
   return (
-    <div className="flex flex-col gap-1">
-      {label && (
-        <label htmlFor={id} className="label-field">
-          {label}
-        </label>
-      )}
-      <select
-        id={id}
-        className={`input-field ${error ? 'border-red-400' : ''} ${className}`}
-        {...rest}
-      >
-        {children}
-      </select>
-      {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
-    </div>
+    <label htmlFor={htmlFor} className={cn('label', className)}>
+      {children}
+    </label>
   )
 }

@@ -5,7 +5,30 @@
  * @returns {string}
  */
 export function formatDate(dateString, options = { year: 'numeric', month: 'long', day: 'numeric' }) {
+  if (!dateString) return ''
   return new Date(dateString).toLocaleDateString('en-US', options)
+}
+
+/**
+ * Format date as "Mon YYYY" (e.g., "Jan 2024") for compact timeline display
+ * @param {string} dateString
+ * @returns {string}
+ */
+export function formatMonthYear(dateString) {
+  if (!dateString) return 'Present'
+  return new Date(dateString).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+}
+
+/**
+ * Format date range
+ * @param {string} startDate
+ * @param {string|null} endDate
+ * @returns {string}
+ */
+export function formatDateRange(startDate, endDate) {
+  const start = formatMonthYear(startDate)
+  const end = endDate ? formatMonthYear(endDate) : 'Present'
+  return `${start} — ${end}`
 }
 
 /**
@@ -62,21 +85,6 @@ export function getStatusColor(status) {
 }
 
 /**
- * Get publication type label
- * @param {string} type
- * @returns {string}
- */
-export function getPublicationTypeLabel(type) {
-  const labels = {
-    journal: 'Journal Article',
-    conference: 'Conference Paper',
-    book_chapter: 'Book Chapter',
-    report: 'Technical Report',
-  }
-  return labels[type] ?? type
-}
-
-/**
  * Debounce a function
  * @param {function} fn
  * @param {number} delay
@@ -88,4 +96,13 @@ export function debounce(fn, delay) {
     clearTimeout(timer)
     timer = setTimeout(() => fn(...args), delay)
   }
+}
+
+/**
+ * Combine class names, filtering out falsy values
+ * @param  {...string} classes
+ * @returns {string}
+ */
+export function cn(...classes) {
+  return classes.filter(Boolean).join(' ')
 }

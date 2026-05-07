@@ -1,26 +1,22 @@
-/**
- * @typedef {'blue'|'green'|'amber'|'red'|'slate'} BadgeColor
- */
+import { cn } from '@/utils'
 
-const colorClasses = {
-  blue: 'bg-primary-100 text-primary-700',
-  green: 'bg-emerald-100 text-emerald-700',
-  amber: 'bg-amber-100 text-amber-700',
-  red: 'bg-red-100 text-red-700',
-  slate: 'bg-slate-100 text-slate-600',
+/**
+ * Monochrome badge system. Old variants (cyan/amber/slate) are
+ * aliased so existing callers still work without code changes.
+ */
+const VARIANTS = {
+  light: 'badge-light',
+  outline: 'badge-outline',
+  dark: 'badge-dark',
+  // legacy aliases
+  cyan: 'badge-light',
+  amber: 'badge-outline',
+  slate: 'badge-dark',
 }
 
-/**
- * Badge / pill component for tags and status labels
- * @param {{
- *   children: React.ReactNode,
- *   color?: BadgeColor,
- *   className?: string
- * }} props
- */
-export function Badge({ children, color = 'blue', className = '' }) {
+export function Badge({ variant = 'outline', className = '', children, ...props }) {
   return (
-    <span className={`badge ${colorClasses[color] ?? colorClasses.blue} ${className}`}>
+    <span className={cn(VARIANTS[variant] ?? VARIANTS.outline, className)} {...props}>
       {children}
     </span>
   )

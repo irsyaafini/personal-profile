@@ -1,161 +1,64 @@
-<<<<<<< HEAD
-# 🔬 EpiPortfolio — Epidemiologist Portfolio Website
+# Portfolio + Admin Panel
 
-A full-stack, production-ready portfolio website for public health professionals, built with React + Supabase.
+Folder ini berisi:
+- `src/` — kode lengkap (homepage tema monokrom + admin panel)
+- `supabase-setup.sql` — script untuk Supabase (RLS policies + Storage policies)
 
----
+## Cara Pasang
 
-## 🚀 Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 18 + Vite |
-| Routing | React Router v6 |
-| Styling | TailwindCSS |
-| Animation | Framer Motion |
-| Data Fetching | TanStack Query v5 |
-| State | Zustand |
-| Charts | Recharts |
-| Backend | Supabase (Auth + PostgreSQL + Storage + RLS) |
-| Deployment | Netlify |
-
----
-
-## 📁 Project Structure
-
-```
-src/
-├── app/
-│   ├── router/          # React Router config + ProtectedRoute
-│   ├── providers/       # AuthProvider, QueryProvider
-│   └── store/           # Zustand stores (auth, ui)
-├── features/
-│   ├── research/        # ResearchForm component
-│   └── publications/    # PublicationForm component
-├── pages/
-│   ├── public/          # Home, About, Research, Publications, Contact, 404
-│   └── admin/           # Login, Dashboard, Research, Publications, Messages, Profile
-├── components/
-│   ├── ui/              # Button, Input, Card, Badge, Modal, Skeleton, EmptyState
-│   ├── layout/          # Navbar, Footer, PublicLayout, AdminLayout, AdminSidebar
-│   └── common/          # SectionHeader, StatCard, ResearchChart, ConfirmDialog
-├── hooks/               # useAuth, useResearch, usePublications, useMessages, useProfile
-├── services/            # authService, researchService, publicationService, messageService, profileService
-├── lib/                 # supabase.js
-├── utils/               # formatDate, truncateText, safeJsonParse, etc.
-└── constants/           # NAV_LINKS, QUERY_KEYS, CHART_COLORS, etc.
-```
-
----
-
-## ⚡ Quick Start
-
-### 1. Clone & Install
-
-```bash
-git clone <your-repo>
-cd epidemio-portfolio
-npm install
-```
+### 1. Replace folder `src`
+Hapus folder `src` lama di root project Anda, lalu copy folder `src` di sini menggantikannya.
+Tidak perlu install package baru — semua dependency (`@supabase/supabase-js`, `@tanstack/react-query`, `zustand`, `react-router-dom`, `lucide-react`, `@use-gesture/react`) sudah ada di project Anda sebelumnya.
 
 ### 2. Setup Supabase
 
-1. Create a project at [supabase.com](https://supabase.com)
-2. Go to **SQL Editor** and run `supabase/schema.sql`
-3. Go to **Storage** → create a bucket named `portfolio-assets` (public)
+Buka **Supabase Dashboard → SQL Editor**, lalu jalankan **dua file SQL** secara berurutan:
 
-### 3. Configure Environment
+1. **`supabase-schema.sql`** — membuat semua tabel + kolom yang dibutuhkan (`profile`, `experiences`, `skills`, `gallery`, `research`, `messages`). File ini **idempotent** — aman dijalankan berkali-kali, tidak akan menghapus data yang sudah ada. Hanya menambah kolom yang belum ada.
+2. **`supabase-setup.sql`** — meng-enable RLS dan menambah policies (public read, authenticated write).
 
-```bash
-cp .env.example .env
-```
+Lalu buat **Storage bucket** bernama `portfolio` (Storage → New bucket → public ON).
 
-Fill in your Supabase credentials:
+> **Catatan:** Kalau Anda dapat error `Could not find the 'xxx' column of 'yyy' in the schema cache` saat upload/save di admin panel, itu berarti schema belum lengkap — jalankan `supabase-schema.sql` lagi untuk menyinkronkan.
 
-```env
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-```
+### 3. Buat akun admin
 
-### 4. Create Admin User
+**Authentication → Users → Add user → Create new user** dengan email + password pilihan Anda. Tidak ada signup publik — admin panel hanya menerima login user yang sudah dibuat manual.
 
-In Supabase Dashboard → **Authentication** → **Users** → **Invite user**, create your admin account.
-
-### 5. Run Locally
+### 4. Jalankan
 
 ```bash
 npm run dev
 ```
 
----
+Buka:
+- `http://localhost:5173/` — homepage publik
+- `http://localhost:5173/admin/login` — login admin
+- `http://localhost:5173/admin` — dashboard (otomatis redirect ke login kalau belum sign in)
 
-## 🗄️ Database Schema
+## Struktur Admin
 
-### Tables
-- **`profile`** — Name, title, bio, photo, contact info
-- **`research_projects`** — Research with JSON chart data, tags, status
-- **`publications`** — Papers with DOI, citations, abstract
-- **`messages`** — Contact form submissions
+| Route | Fungsi |
+|---|---|
+| `/admin/login` | Sign in dengan Supabase Auth |
+| `/admin` | Dashboard — overview jumlah konten setiap section |
+| `/admin/profile` | Edit hero/bio (nama, headline, avatar, email, social, dst.) |
+| `/admin/experiences` | CRUD timeline (work, education, certification, award) |
+| `/admin/skills` | CRUD skills + level 0–5 |
+| `/admin/gallery` | CRUD foto + upload langsung ke Supabase Storage |
+| `/admin/research` | CRUD research projects + cover image |
+| `/admin/messages` | Inbox pesan dari contact form, mark as read/unread, delete |
 
-### RLS Policies
-| Table | Public | Admin |
-|-------|--------|-------|
-| profile | READ | FULL |
-| research_projects | READ | FULL |
-| publications | READ | FULL |
-| messages | INSERT only | FULL |
+Semua perubahan di admin panel langsung tercermin di homepage publik (lewat React Query — invalidate otomatis setelah save).
 
----
+## Catatan Keamanan
 
-## 📊 Chart Data Format
+RLS policy di `supabase-setup.sql` membatasi:
+- **Public** hanya bisa **read** semua tabel (kecuali `messages` — public hanya bisa **insert**)
+- **Authenticated user** (admin) bisa **read + write semua**
 
-Research projects accept a JSON array for visualization:
+Jika kemudian Anda mau membatasi admin ke email tertentu saja, edit policy `_write_authenticated` jadi `using (auth.email() = 'you@example.com')`.
 
-```json
-[
-  { "name": "Jan 2023", "cases": 1200, "deaths": 45 },
-  { "name": "Feb 2023", "cases": 980, "deaths": 38 }
-]
-```
+## File yang TIDAK Perlu Diubah Lagi
 
-- The `name` field is used as the X-axis label
-- All other numeric fields are rendered as chart lines/bars
-- Supports both Line and Bar chart types (toggle in detail modal)
-
----
-
-## 🚢 Deploy to Netlify
-
-1. Push to GitHub
-2. Connect repo in Netlify
-3. Set build command: `npm run build`, publish dir: `dist`
-4. Add environment variables: `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
-5. Deploy!
-
-The `netlify.toml` handles SPA redirect rules automatically.
-
----
-
-## 📐 Architecture Principles
-
-- **Feature-based structure** — code grouped by domain, not type
-- **Separation of concerns** — UI in components, logic in hooks, API in services
-- **DRY** — shared UI primitives, reusable hooks
-- **Clean Code** — JSDoc types, descriptive names, max ~200 lines/file
-- **Performance** — lazy loaded pages, TanStack Query caching, optimistic updates
-
----
-
-## 🔐 Admin Routes
-
-| Path | Page |
-|------|------|
-| `/admin/login` | Login form |
-| `/admin` | Dashboard overview |
-| `/admin/research` | CRUD research projects |
-| `/admin/publications` | CRUD publications |
-| `/admin/messages` | View & manage messages |
-| `/admin/profile` | Edit portfolio profile |
-=======
-# epidemiology-portofolio
->>>>>>> bf450cb98fc2e68bd4601c8cfba42b9be5f349f2
+`tailwind.config.js`, `vite.config.js`, `package.json`, `index.html`, `.env` — semua tetap.

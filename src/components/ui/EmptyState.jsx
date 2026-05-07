@@ -1,46 +1,25 @@
-/**
- * Empty state display component
- * @param {{
- *   title: string,
- *   description?: string,
- *   icon?: React.ReactNode,
- *   action?: React.ReactNode
- * }} props
- */
-export function EmptyState({ title, description, icon, action }) {
+import { cn } from '@/utils'
+
+export function EmptyState({ icon: Icon, title, description, action, className = '' }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-      {icon && (
-        <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center text-3xl mb-4">
-          {icon}
+    <div
+      className={cn(
+        'flex flex-col items-center justify-center text-center',
+        'rounded-2xl border border-dim bg-white/[0.02]',
+        'py-12 px-6',
+        className
+      )}
+    >
+      {Icon && (
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/5 text-slate-400">
+          <Icon className="h-5 w-5" />
         </div>
       )}
-      <h3 className="text-lg font-semibold text-slate-700 mb-2">{title}</h3>
-      {description && <p className="text-slate-400 text-sm max-w-sm mb-6">{description}</p>}
-      {action}
-    </div>
-  )
-}
-
-/**
- * Error state component
- */
-export function ErrorState({ message = 'Something went wrong.', onRetry }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center text-3xl mb-4">
-        ⚠️
-      </div>
-      <h3 className="text-lg font-semibold text-slate-700 mb-2">Failed to load</h3>
-      <p className="text-slate-400 text-sm mb-6">{message}</p>
-      {onRetry && (
-        <button
-          onClick={onRetry}
-          className="btn-secondary text-sm"
-        >
-          Try again
-        </button>
+      <h3 className="text-base font-semibold text-slate-200">{title}</h3>
+      {description && (
+        <p className="mt-2 text-sm text-slate-500 max-w-sm">{description}</p>
       )}
+      {action && <div className="mt-5">{action}</div>}
     </div>
   )
 }

@@ -1,0 +1,124 @@
+import { Link } from 'react-router-dom'
+import { ArrowUpRight, FlaskConical } from 'lucide-react'
+import { Container } from '@/components/ui/Container'
+import { SectionHeader } from '@/components/ui/SectionHeader'
+import { Card } from '@/components/ui/Card'
+import { Skeleton } from '@/components/ui/Skeleton'
+import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import { SmartImage } from '@/components/common/SmartImage'
+import { useResearchList } from '@/features/research/useResearch'
+import { useTranslation } from '@/features/i18n/useTranslation'
+import { resolveImage } from '@/lib/storage'
+import { formatDate } from '@/utils'
+
+function ResearchCard({ item }) {
+  const cover = resolveImage(item.cover_path)
+
+  return (
+    <Card className="group overflow-hidden flex flex-col">
+      <Link to={`/research/${item.id}`} className="block relative overflow-hidden">
+        <SmartImage
+          src={cover}
+          alt={item.title}
+          containerClassName="aspect-[16/10] w-full"
+          className="group-hover:scale-105 transition-transform duration-700"
+        />
+        {/* Subtle dark overlay for premium feel */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+      </Link>
+
+      <div className="p-6 sm:p-7 flex-1 flex flex-col">
+        <div className="flex items-center gap-2 mb-3">
+          <Badge variant={item.status === 'ongoing' ? 'light' : 'outline'}>
+            <FlaskConical className="h-3 w-3" />
+            {item.status ?? 'research'}
+          </Badge>
+          {item.started_at && (
+            <span className="text-[10px] text-white/40 font-mono tracking-wider">
+              {formatDate(item.started_at, { year: 'numeric', month: 'short' })}
+            </span>
+          )}
+        </div>
+
+        <Link to={`/research/${item.id}`} className="block">
+          <h3 className="text-base sm:text-lg font-semibold text-white leading-snug group-hover:text-white/80 transition tracking-tight">
+            {item.title}
+          </h3>
+        </Link>
+
+        {item.summary && (
+          <p className="mt-2.5 text-sm text-white/55 leading-relaxed line-clamp-3">
+            {item.summary}
+          </p>
+        )}
+
+        <div className="mt-auto pt-5 flex items-center justify-end">
+          <Link
+            to={`/research/${item.id}`}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-white/70 hover:text-white transition"
+          >
+            View
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+export function PortfolioSection() {
+  const { t } = useTranslation()
+  const { data: research, isLoading: loadingResearch } = useResearchList({ limit: 6 })
+
+  return (
+    <section id="portfolio" className="section-gap">
+      <Container>
+        <SectionHeader
+          eyebrow="Work & Research"
+          title={t('sections.portfolio', 'Research & Portfolio')}
+          description="A selection of recent research projects. Click through for full context, methodology, and findings."
+        />
+
+        {/* Research grid */}
+        <div className="mt-12 sm:mt-16">
+          <div className="flex items-end justify-between mb-7">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/60 flex items-center gap-2.5">
+              <FlaskConical className="h-3.5 w-3.5" />
+              Research Projects
+            </h3>
+            <Button as={Link} to="/research" variant="ghost" className="text-[11px] uppercase tracking-[0.18em]">
+              {t('common.view_all', 'View all')}
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+
+          {loadingResearch ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Card key={i}>
+                  <Skeleton className="aspect-[16/10] rounded-none rounded-t-2xl" />
+                  <div className="p-6 space-y-3">
+                    <Skeleton className="h-4 w-1/3" />
+                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-12" />
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : !research || research.length === 0 ? (
+            <Card>
+              <div className="p-10 text-center text-sm text-white/40">No research projects yet.</div>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {research.slice(0, 6).map((r) => (
+                <ResearchCard key={r.id} item={r} />
+              ))}
+            </div>
+          )}
+        </div>
+      </Container>
+    </section>
+  )
+}

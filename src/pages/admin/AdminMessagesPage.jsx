@@ -1,139 +1,191 @@
 import { useState } from 'react'
-import { useMessages, useMarkMessageRead, useDeleteMessage } from '@/hooks/useMessages'
-import { Modal } from '@/components/ui/Modal'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Trash2, Mail, MailOpen, X, Loader2 } from 'lucide-react'
+import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
+import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
 import { Button } from '@/components/ui/Button'
-import { ConfirmDialog } from '@/components/common/ConfirmDialog'
-import { Skeleton } from '@/components/ui/Skeleton'
-import { EmptyState, ErrorState } from '@/components/ui/EmptyState'
+import { useToast } from '@/hooks/useToast'
+import { messagesService } from '@/services/messages.service'
+import { QUERY_KEYS } from '@/constants'
 import { formatDate } from '@/utils'
+import { cn } from '@/utils'
 
-/**
- * Admin Messages management page
- */
 export default function AdminMessagesPage() {
-  const { data: messages, isLoading, isError, refetch } = useMessages()
-  const { mutate: markRead } = useMarkMessageRead()
-  const { mutate: remove, isPending: deleting } = useDeleteMessage()
+  const qc = useQueryClient()
+  const { toast, show } = useToast()
+  const [filter, setFilter] = useState('all') // all | unread
 
-  const [viewTarget, setViewTarget] = useState(null)
-  const [deleteTarget, setDeleteTarget] = useState(null)
+  const { data: items = [], isLoading } = useQuery({
+    queryKey: QUERY_KEYS.MESSAGES,
+    queryFn: () => messagesService.list({ unreadOnly: filter === 'unread' }),
+  })
 
-  const handleView = (msg) => {
-    setViewTarget(msg)
-    if (!msg.is_read) markRead(msg.id)
+  const [openMsg, setOpenMsg] = useState(null)
+  const [confirmId, setConfirmId] = useState(null)
+  const [busyDelete, setBusyDelete] = useState(false)
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: QUERY_KEYS.MESSAGES })
+
+  const handleOpen = async (m) => {
+    setOpenMsg(m)
+    if (!m.read) {
+      try {
+        await messagesService.markRead(m.id, true)
+        invalidate()
+      } catch (e) {
+        // non-blocking
+      }
+    }
+  }
+
+  const handleToggleRead = async (m) => {
+    try {
+      await messagesService.markRead(m.id, !m.read)
+      invalidate()
+    } catch (err) {
+      show(err.message || 'Failed', 'error')
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!confirmId) return
+    setBusyDelete(true)
+    try {
+      await messagesService.remove(confirmId)
+      invalidate()
+      show('Message deleted.')
+      setConfirmId(null)
+      if (openMsg?.id === confirmId) setOpenMsg(null)
+    } catch (err) {
+      show(err.message || 'Failed to delete', 'error')
+    } finally {
+      setBusyDelete(false)
+    }
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 font-display">Messages</h1>
-        <p className="text-slate-500 text-sm mt-1">
-          {messages?.filter(m => !m.is_read).length ?? 0} unread · {messages?.length ?? 0} total
-        </p>
-      </div>
-
-      {isLoading && (
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-2xl" />)}
-        </div>
-      )}
-      {isError && <ErrorState onRetry={refetch} />}
-
-      {!isLoading && !isError && messages?.length === 0 && (
-        <EmptyState title="No messages yet" description="Contact form submissions will appear here." icon="✉️" />
-      )}
-
-      {!isLoading && !isError && messages?.length > 0 && (
-        <div className="space-y-3">
-          {messages.map(msg => (
-            <div
-              key={msg.id}
-              className={`card-base p-5 cursor-pointer hover:border-primary-200 transition-colors ${
-                !msg.is_read ? 'border-primary-200 bg-primary-50/30' : ''
-              }`}
-              onClick={() => handleView(msg)}
+    <>
+      {toast}
+      <AdminPageHeader
+        title="Messages"
+        description="Submissions from your contact form."
+        actions={
+          <div className="inline-flex rounded-full bg-[#161616] border border-white/[0.08] p-1">
+            <button
+              onClick={() => setFilter('all')}
+              className={cn(
+                'px-3.5 py-1.5 rounded-full text-xs font-medium transition',
+                filter === 'all' ? 'bg-white text-black' : 'text-white/65 hover:text-white'
+              )}
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3 min-w-0">
-                  {!msg.is_read && (
-                    <span className="flex-shrink-0 w-2 h-2 bg-primary-500 rounded-full" />
-                  )}
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="font-semibold text-sm text-slate-900">{msg.name}</span>
-                      <span className="text-xs text-slate-400">{msg.email}</span>
-                    </div>
-                    {msg.subject && (
-                      <p className="text-sm text-slate-700 font-medium truncate">{msg.subject}</p>
-                    )}
-                    <p className="text-xs text-slate-400 mt-0.5 truncate">{msg.message}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  <span className="text-xs text-slate-400 whitespace-nowrap">
-                    {formatDate(msg.created_at, { month: 'short', day: 'numeric', year: 'numeric' })}
+              All
+            </button>
+            <button
+              onClick={() => setFilter('unread')}
+              className={cn(
+                'px-3.5 py-1.5 rounded-full text-xs font-medium transition',
+                filter === 'unread' ? 'bg-white text-black' : 'text-white/65 hover:text-white'
+              )}
+            >
+              Unread
+            </button>
+          </div>
+        }
+      />
+
+      {isLoading ? (
+        <p className="text-white/50 text-sm">Loading…</p>
+      ) : items.length === 0 ? (
+        <div className="rounded-2xl border border-white/[0.06] bg-[#161616] p-12 text-center">
+          <Mail className="h-8 w-8 text-white/30 mx-auto mb-3" />
+          <p className="text-sm text-white/40">
+            {filter === 'unread' ? 'No unread messages.' : 'No messages yet.'}
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-white/[0.06] bg-[#161616] divide-y divide-white/[0.05] overflow-hidden">
+          {items.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => handleOpen(m)}
+              className={cn(
+                'w-full text-left px-5 py-4 hover:bg-white/[0.03] transition flex items-start gap-4',
+                !m.read && 'bg-white/[0.015]'
+              )}
+            >
+              <span className={cn(
+                'mt-1 inline-flex h-2 w-2 rounded-full shrink-0',
+                m.read ? 'bg-white/15' : 'bg-white'
+              )} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  <span className={cn('text-sm', m.read ? 'text-white/70' : 'text-white font-semibold')}>
+                    {m.name}
                   </span>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setDeleteTarget(msg) }}
-                    className="text-xs text-red-400 hover:text-red-600 font-medium transition-colors"
-                  >
-                    Delete
-                  </button>
+                  <span className="text-xs text-white/35">·</span>
+                  <span className="text-xs text-white/45 truncate">{m.email}</span>
                 </div>
+                {m.subject && (
+                  <p className={cn('text-sm mt-0.5 truncate', m.read ? 'text-white/55' : 'text-white/85')}>
+                    {m.subject}
+                  </p>
+                )}
+                <p className="text-xs text-white/40 mt-1 line-clamp-1">{m.message}</p>
               </div>
-            </div>
+              <span className="text-[10px] text-white/35 font-mono whitespace-nowrap shrink-0">
+                {formatDate(m.created_at, { month: 'short', day: 'numeric' })}
+              </span>
+            </button>
           ))}
         </div>
       )}
 
-      {/* Message detail modal */}
-      <Modal isOpen={!!viewTarget} onClose={() => setViewTarget(null)} title="Message" size="md">
-        {viewTarget && (
-          <div className="space-y-5">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">From</p>
-                <p className="font-semibold text-slate-900">{viewTarget.name}</p>
+      {openMsg && (
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center px-4 py-8 overflow-y-auto">
+          <button aria-label="Close" onClick={() => setOpenMsg(null)} className="fixed inset-0 bg-black/70 backdrop-blur-sm" />
+          <div className="relative w-full max-w-2xl rounded-2xl bg-[#161616] border border-white/10 shadow-2xl">
+            <div className="px-6 sm:px-7 py-5 border-b border-white/[0.06] flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <h3 className="font-display text-lg font-semibold text-white truncate">
+                  {openMsg.subject || '(no subject)'}
+                </h3>
+                <p className="text-xs text-white/50 mt-0.5">
+                  {openMsg.name} · <a href={`mailto:${openMsg.email}`} className="hover:text-white underline-offset-4 hover:underline">{openMsg.email}</a>
+                </p>
               </div>
-              <div>
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Email</p>
-                <a href={`mailto:${viewTarget.email}`} className="text-primary-600 hover:underline text-sm">
-                  {viewTarget.email}
-                </a>
-              </div>
+              <button onClick={() => setOpenMsg(null)} className="text-white/55 hover:text-white shrink-0" aria-label="Close">
+                <X className="h-5 w-5" />
+              </button>
             </div>
-            {viewTarget.subject && (
-              <div>
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Subject</p>
-                <p className="text-slate-800 font-medium">{viewTarget.subject}</p>
-              </div>
-            )}
-            <div>
-              <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">Message</p>
-              <p className="text-slate-700 leading-relaxed whitespace-pre-wrap bg-slate-50 rounded-xl p-4">
-                {viewTarget.message}
+            <div className="p-6 sm:p-7">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-white/40 font-semibold mb-4">
+                {formatDate(openMsg.created_at, { year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
+              <p className="text-sm text-white/85 leading-relaxed whitespace-pre-wrap">
+                {openMsg.message}
               </p>
             </div>
-            <p className="text-xs text-slate-400">
-              Received: {formatDate(viewTarget.created_at, { dateStyle: 'long', timeStyle: 'short' })}
-            </p>
-            <div className="flex justify-between">
-              <a href={`mailto:${viewTarget.email}?subject=Re: ${viewTarget.subject ?? ''}`}
-                className="btn-secondary text-sm py-2">
-                Reply via Email
-              </a>
-              <Button variant="ghost" onClick={() => setViewTarget(null)}>Close</Button>
+            <div className="px-6 sm:px-7 py-4 border-t border-white/[0.06] flex items-center justify-between gap-2">
+              <Button variant="ghost" onClick={() => handleToggleRead(openMsg)}>
+                {openMsg.read ? <><Mail className="h-4 w-4" /> Mark as unread</> : <><MailOpen className="h-4 w-4" /> Mark as read</>}
+              </Button>
+              <Button variant="ghost" onClick={() => { setConfirmId(openMsg.id) }}>
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </Button>
             </div>
           </div>
-        )}
-      </Modal>
+        </div>
+      )}
 
       <ConfirmDialog
-        isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)}
-        onConfirm={() => remove(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) })}
-        isLoading={deleting}
-        message={`Delete message from "${deleteTarget?.name}"?`}
+        open={!!confirmId}
+        title="Delete message?"
+        description="The sender will not be notified. This action cannot be undone."
+        busy={busyDelete}
+        onCancel={() => setConfirmId(null)}
+        onConfirm={handleDelete}
       />
-    </div>
+    </>
   )
 }
