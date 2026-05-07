@@ -192,8 +192,12 @@
   .blob {
     position: absolute;
     border-radius: 50%;
-    filter: blur(100px);
+    filter: blur(70px);
     pointer-events: none;
+    /* Promote to its own GPU layer so blur is rasterized once,
+       not re-computed on every scroll frame. */
+    will-change: transform;
+    transform: translateZ(0);
   }
 }
 

@@ -3,8 +3,15 @@ import { Upload, X, Loader2 } from 'lucide-react'
 import { uploadFile, resolveImage, deleteFile } from '@/lib/storage'
 import { cn } from '@/utils'
 
+function formatBytes(n) {
+  if (!n) return '0 B'
+  if (n < 1024) return `${n} B`
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`
+  return `${(n / 1024 / 1024).toFixed(1)} MB`
+}
+
 /**
- * Image uploader that stores the resulting storage path in `value`.
+ * Image uploader that auto-compresses raster images before upload.
  *
  * @param {string} value         storage path (or URL)
  * @param {(path: string) => void} onChange  receives the new path or '' on remove
@@ -13,6 +20,7 @@ import { cn } from '@/utils'
  */
 export function ImageUpload({ value, onChange, folder = 'misc', label = 'Image', className = '' }) {
   const [busy, setBusy] = useState(false)
+  const [progress, setProgress] = useState(null) // { stage: 'compress'|'upload', original, compressed }
   const [error, setError] = useState(null)
   const fileRef = useRef(null)
 
@@ -27,15 +35,18 @@ export function ImageUpload({ value, onChange, folder = 'misc', label = 'Image',
     }
     setError(null)
     setBusy(true)
+    setProgress({ stage: 'compress', original: file.size })
     try {
-      // If a previous storage path exists (not external URL), best-effort delete it
+      // Best-effort delete previous storage object
       if (value && !value.startsWith('http')) {
         await deleteFile(value)
       }
       const { path } = await uploadFile(file, { folder })
       onChange(path)
+      setProgress(null)
     } catch (err) {
       setError(err.message || 'Upload failed')
+      setProgress(null)
     } finally {
       setBusy(false)
     }
@@ -97,7 +108,7 @@ export function ImageUpload({ value, onChange, folder = 'misc', label = 'Image',
               <Upload className="h-6 w-6 text-white/50 mb-3" />
             )}
             <p className="text-sm text-white/65">
-              {busy ? 'Uploading…' : 'Drag & drop an image, or'}
+              {busy ? 'Processing & uploading…' : 'Drag & drop an image, or'}
             </p>
             {!busy && (
               <button
@@ -107,6 +118,11 @@ export function ImageUpload({ value, onChange, folder = 'misc', label = 'Image',
               >
                 browse files
               </button>
+            )}
+            {progress && (
+              <p className="mt-2 text-[11px] text-white/45">
+                Compressing {formatBytes(progress.original)}…
+              </p>
             )}
           </div>
         )}
@@ -134,6 +150,10 @@ export function ImageUpload({ value, onChange, folder = 'misc', label = 'Image',
 
       <p className="text-[11px] text-white/35">
         Stored path: <span className="font-mono">{value || '—'}</span>
+      </p>
+      <p className="text-[10px] text-white/30 leading-relaxed">
+        Images are automatically resized to max 1600px and JPEG-compressed (~80% quality)
+        before upload to keep your site fast.
       </p>
     </div>
   )

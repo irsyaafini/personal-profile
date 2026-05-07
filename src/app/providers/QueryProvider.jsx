@@ -7,10 +7,14 @@ export function QueryProvider({ children }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 1000 * 60 * 5, // 5 minutes
-            gcTime: 1000 * 60 * 30,   // 30 minutes
+            // Public site content (profile, gallery, etc.) is updated by the
+            // owner via the admin panel — visitors don't need fresh fetches
+            // every few minutes. 30 min stale + 1 hr gc keeps things snappy.
+            staleTime: 1000 * 60 * 30,
+            gcTime: 1000 * 60 * 60,
             retry: 1,
             refetchOnWindowFocus: false,
+            refetchOnReconnect: false,
           },
           mutations: {
             retry: 0,

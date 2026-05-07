@@ -3,8 +3,23 @@ import { cn } from '@/utils'
 
 /**
  * Image that fades in once loaded; falls back to a neutral block on error.
+ *
+ * Defaults:
+ *   loading="lazy"   — most images are below the fold
+ *   decoding="async" — let the browser decode off the main thread
+ *
+ * For above-the-fold images (hero avatar, etc.) pass `loading="eager"`
+ * and `fetchpriority="high"` to prioritize their fetch.
  */
-export function SmartImage({ src, alt = '', className = '', containerClassName = '', ...rest }) {
+export function SmartImage({
+  src,
+  alt = '',
+  className = '',
+  containerClassName = '',
+  loading = 'lazy',
+  decoding = 'async',
+  ...rest
+}) {
   const [loaded, setLoaded] = useState(false)
   const [errored, setErrored] = useState(false)
 
@@ -20,7 +35,8 @@ export function SmartImage({ src, alt = '', className = '', containerClassName =
         <img
           src={src}
           alt={alt}
-          loading="lazy"
+          loading={loading}
+          decoding={decoding}
           onLoad={() => setLoaded(true)}
           onError={() => setErrored(true)}
           className={cn(

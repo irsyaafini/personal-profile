@@ -1,28 +1,57 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 
 /**
  * Returns the id of the section currently in view.
+ *
+ * Optimized: throttled via requestAnimationFrame (one update per frame max)
+ * and section elements are looked up once per scroll listener, not per call.
+ *
  * @param {string[]} sectionIds
  * @param {number} [offset=120]
  */
 export function useScrollSpy(sectionIds, offset = 120) {
+  // Stable key so the effect doesn't re-run on every render of the parent.
+  const key = sectionIds.join('|')
   const [active, setActive] = useState(sectionIds[0] ?? null)
 
+  // Memoize ids to keep referential stability across renders.
+  const ids = useMemo(() => sectionIds, [key]) // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
-    const onScroll = () => {
+    if (ids.length === 0) return
+
+    let frame = 0
+    let elements = []
+
+    const refreshElements = () => {
+      elements = ids.map((id) => ({ id, el: document.getElementById(id) }))
+    }
+    refreshElements()
+
+    const compute = () => {
       const scrollY = window.scrollY + offset
-      let current = sectionIds[0]
-      for (const id of sectionIds) {
-        const el = document.getElementById(id)
+      let current = ids[0]
+      for (const { id, el } of elements) {
         if (el && el.offsetTop <= scrollY) current = id
       }
-      setActive(current)
+      setActive((prev) => (prev === current ? prev : current))
+      frame = 0
     }
 
-    onScroll()
+    const onScroll = () => {
+      if (frame) return
+      frame = requestAnimationFrame(compute)
+    }
+
+    compute()
     window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [sectionIds, offset])
+    window.addEventListener('resize', refreshElements, { passive: true })
+    return () => {
+      if (frame) cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', refreshElements)
+    }
+  }, [ids, offset])
 
   return active
 }

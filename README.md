@@ -8,7 +8,15 @@ Folder ini berisi:
 
 ### 1. Replace folder `src`
 Hapus folder `src` lama di root project Anda, lalu copy folder `src` di sini menggantikannya.
-Tidak perlu install package baru — semua dependency (`@supabase/supabase-js`, `@tanstack/react-query`, `zustand`, `react-router-dom`, `lucide-react`, `@use-gesture/react`) sudah ada di project Anda sebelumnya.
+
+### 1a. Install dependency baru: `gsap`
+Untuk animasi staggered menu di mobile/tablet, project butuh `gsap`:
+
+```bash
+npm install gsap
+```
+
+Dependency lain (`@supabase/supabase-js`, `@tanstack/react-query`, `zustand`, `react-router-dom`, `lucide-react`, `@use-gesture/react`) sudah ada di project Anda sebelumnya.
 
 ### 2. Setup Supabase
 

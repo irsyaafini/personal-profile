@@ -16,15 +16,23 @@ export function HeroSection() {
   const headline = profile?.headline ?? 'Researcher · Lifelong Learner'
   const location = profile?.location
 
+  // Split full name → first part (white) + last word (italic silver gradient)
+  const nameWords = fullName.trim().split(/\s+/)
+  const lastWord = nameWords[nameWords.length - 1]
+  const firstPart = nameWords.slice(0, -1).join(' ')
+
   return (
     <section
       id="home"
-      className="relative overflow-hidden pt-12 sm:pt-20 md:pt-28 pb-16 sm:pb-24"
+      // overflow-x-clip (instead of overflow-hidden) doesn't clip text
+      // descenders / italic overhang vertically.
+      // pt-12 on mobile → tight spacing below the sticky GlassSurface navbar.
+      className="relative overflow-x-clip pt-12 sm:pt-10 md:pt-12 pb-16 sm:pb-24"
     >
       <Container>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           {/* Text */}
-          <div className="lg:col-span-7 order-2 lg:order-1">
+          <div className="lg:col-span-7 order-2 lg:order-1 min-w-0">
             {/* Subtle eyebrow */}
             <div className="inline-flex items-center gap-2.5 mb-7 px-3.5 py-1.5 rounded-full bg-white/[0.03] border border-white/10">
               <span className="relative flex h-1.5 w-1.5">
@@ -39,16 +47,15 @@ export function HeroSection() {
             {isLoading ? (
               <Skeleton className="h-14 sm:h-20 w-3/4" />
             ) : (
-              <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem] font-semibold tracking-[-0.03em] leading-[0.95]">
-                {fullName.split(' ').map((word, i, arr) => (
-                  <span key={i} className="block">
-                    {i === arr.length - 1 ? (
-                      <span className="text-gradient-silver italic font-light">{word}</span>
-                    ) : (
-                      <span className="text-white">{word}</span>
-                    )}
-                  </span>
-                ))}
+              // pr-2 gives the italic letterform breathing room so it
+              // doesn't get cut off at the right edge.
+              <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold tracking-[-0.03em] leading-[1.1] break-words pr-2">
+                {firstPart && (
+                  <>
+                    <span className="text-white">{firstPart}</span>{' '}
+                  </>
+                )}
+                <span className="text-gradient-silver italic font-light">{lastWord}</span>
               </h1>
             )}
 

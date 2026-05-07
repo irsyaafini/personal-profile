@@ -2,20 +2,10 @@
 import { useEffect, useRef, useState, useId } from 'react'
 
 const useDarkMode = () => {
-  const [isDark, setIsDark] = useState(false)
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-    setIsDark(mediaQuery.matches)
-
-    const handler = (e) => setIsDark(e.matches)
-    mediaQuery.addEventListener('change', handler)
-    return () => mediaQuery.removeEventListener('change', handler)
-  }, [])
-
-  return isDark
+  // This site always uses a dark theme — return true unconditionally so
+  // GlassSurface picks the dark variants regardless of the OS-level
+  // prefers-color-scheme setting.
+  return true
 }
 
 const GlassSurface = ({
@@ -214,14 +204,17 @@ const GlassSurface = ({
                         inset 0 -1px 0 0 rgba(255, 255, 255, 0.1)`,
           }
         } else {
+          // Fallback for browsers where SVG filters don't work (Safari, Firefox,
+          // most mobile browsers). Tuned to look like clear glass: very low
+          // opacity tint with strong blur — content behind is visible.
           return {
             ...baseStyles,
-            background: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(12px) saturate(1.8) brightness(1.2)',
-            WebkitBackdropFilter: 'blur(12px) saturate(1.8) brightness(1.2)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: `inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
-                        inset 0 -1px 0 0 rgba(255, 255, 255, 0.1)`,
+            background: 'rgba(20, 20, 20, 0.18)',
+            backdropFilter: 'blur(22px) saturate(1.6)',
+            WebkitBackdropFilter: 'blur(22px) saturate(1.6)',
+            border: '1px solid rgba(255, 255, 255, 0.10)',
+            boxShadow: `inset 0 1px 0 0 rgba(255, 255, 255, 0.10),
+                        0 8px 24px rgba(0, 0, 0, 0.20)`,
           }
         }
       } else {

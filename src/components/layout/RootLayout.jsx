@@ -5,16 +5,19 @@ import { Footer } from './Footer'
 export function RootLayout() {
   return (
     <div className="relative min-h-screen flex flex-col bg-noise">
-      {/* Ambient atmospheric glows — pure white at very low opacity for sophistication */}
+      {/*
+        Ambient atmospheric glows — kept to 2 blobs (was 3) and smaller to
+        reduce GPU paint cost. The blur radius was also lowered in index.css.
+      */}
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div
           className="blob"
           style={{
             top: '-15%',
             right: '-10%',
-            width: '42rem',
-            height: '42rem',
-            background: 'radial-gradient(circle, rgba(255,255,255,0.05), transparent 60%)',
+            width: '36rem',
+            height: '36rem',
+            background: 'radial-gradient(circle, rgba(255,255,255,0.045), transparent 60%)',
           }}
         />
         <div
@@ -22,20 +25,9 @@ export function RootLayout() {
           style={{
             bottom: '-20%',
             left: '-15%',
-            width: '38rem',
-            height: '38rem',
-            background: 'radial-gradient(circle, rgba(255,255,255,0.035), transparent 60%)',
-          }}
-        />
-        <div
-          className="blob"
-          style={{
-            top: '40%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '30rem',
-            height: '30rem',
-            background: 'radial-gradient(circle, rgba(255,255,255,0.02), transparent 60%)',
+            width: '32rem',
+            height: '32rem',
+            background: 'radial-gradient(circle, rgba(255,255,255,0.03), transparent 60%)',
           }}
         />
       </div>

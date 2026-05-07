@@ -19,21 +19,117 @@ export function resolveImage(pathOrUrl, bucket) {
 }
 
 /**
- * Upload a File/Blob to Supabase Storage. Returns the storage path
- * (relative to bucket) suitable for storing in DB columns like
- * `avatar_url`, `image_path`, `cover_path`, `pdf_path`.
+ * Compress + resize an image File on the client using Canvas before upload.
+ * Returns a JPEG/WEBP Blob and target extension.
+ *
+ * - Skips compression for SVG / GIF (preserves animation/vectors)
+ * - Maintains aspect ratio
+ * - Defaults: max 1600px on the longest edge, JPEG quality 0.82
  *
  * @param {File} file
- * @param {object} options
- * @param {string} options.folder  — subfolder inside bucket (e.g., "gallery", "research", "avatars")
- * @param {string} [options.bucket]
- * @returns {Promise<{ path: string, publicUrl: string }>}
+ * @param {object} [opts]
+ * @param {number} [opts.maxDim=1600]   max width/height in px
+ * @param {number} [opts.quality=0.82]  JPEG/WEBP quality 0-1
+ * @param {'image/jpeg'|'image/webp'} [opts.mimeType='image/jpeg']
  */
-export async function uploadFile(file, { folder = 'misc', bucket = STORAGE_BUCKET } = {}) {
+export async function compressImage(file, opts = {}) {
+  const { maxDim = 1600, quality = 0.82, mimeType = 'image/jpeg' } = opts
+
+  // Pass-through for non-rasterizable images
+  if (!file.type.startsWith('image/')) return { blob: file, ext: file.name.split('.').pop()?.toLowerCase() || 'bin' }
+  if (file.type === 'image/svg+xml' || file.type === 'image/gif') {
+    return { blob: file, ext: file.type === 'image/svg+xml' ? 'svg' : 'gif' }
+  }
+
+  // Decode the image
+  const dataUrl = await new Promise((res, rej) => {
+    const r = new FileReader()
+    r.onload = () => res(r.result)
+    r.onerror = () => rej(new Error('Failed to read file'))
+    r.readAsDataURL(file)
+  })
+
+  const img = await new Promise((res, rej) => {
+    const i = new Image()
+    i.onload = () => res(i)
+    i.onerror = () => rej(new Error('Failed to decode image'))
+    i.src = dataUrl
+  })
+
+  // Compute target size keeping aspect ratio
+  let { width, height } = img
+  const longest = Math.max(width, height)
+  if (longest > maxDim) {
+    const scale = maxDim / longest
+    width = Math.round(width * scale)
+    height = Math.round(height * scale)
+  }
+
+  // Skip re-encode if image is already small AND under 300KB — no benefit
+  if (longest <= maxDim && file.size <= 300 * 1024 && (file.type === 'image/jpeg' || file.type === 'image/webp')) {
+    return { blob: file, ext: file.type === 'image/webp' ? 'webp' : 'jpg' }
+  }
+
+  // Render & encode
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  // Draw a white background first to avoid PNG transparency turning black on JPEG
+  if (mimeType === 'image/jpeg') {
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, width, height)
+  }
+  ctx.drawImage(img, 0, 0, width, height)
+
+  const blob = await new Promise((res) => canvas.toBlob(res, mimeType, quality))
+  if (!blob) throw new Error('Failed to encode image')
+
+  // Fallback: if compressed is somehow larger, keep original
+  if (blob.size >= file.size) {
+    return { blob: file, ext: file.name.split('.').pop()?.toLowerCase() || 'jpg' }
+  }
+
+  return { blob, ext: mimeType === 'image/webp' ? 'webp' : 'jpg' }
+}
+
+/**
+ * Upload a File/Blob to Supabase Storage. For raster images, the file is
+ * automatically resized + JPEG-compressed before upload. Returns the
+ * stored path (relative to bucket).
+ *
+ * @param {File} file
+ * @param {object} [options]
+ * @param {string} [options.folder='misc']     subfolder inside bucket
+ * @param {string} [options.bucket]
+ * @param {boolean} [options.compress=true]    set false to keep original bytes
+ * @param {number}  [options.maxDim=1600]      max longest edge in px
+ * @param {number}  [options.quality=0.82]     JPEG quality 0-1
+ */
+export async function uploadFile(file, options = {}) {
   if (!file) throw new Error('No file provided')
 
+  const {
+    folder = 'misc',
+    bucket = STORAGE_BUCKET,
+    compress = true,
+    maxDim = 1600,
+    quality = 0.82,
+  } = options
+
+  // Compress if it's a raster image and compression is enabled
+  let bodyBlob = file
+  let ext = file.name.split('.').pop()?.toLowerCase() || 'bin'
+  let contentType = file.type || undefined
+
+  if (compress && file.type?.startsWith('image/')) {
+    const result = await compressImage(file, { maxDim, quality, mimeType: 'image/jpeg' })
+    bodyBlob = result.blob
+    ext = result.ext
+    contentType = bodyBlob.type || contentType
+  }
+
   // Generate a unique filename to avoid collisions
-  const ext = file.name.split('.').pop()?.toLowerCase() || 'bin'
   const safeBase = file.name
     .replace(/\.[^/.]+$/, '')
     .replace(/[^a-zA-Z0-9_-]/g, '-')
@@ -44,10 +140,10 @@ export async function uploadFile(file, { folder = 'misc', bucket = STORAGE_BUCKE
 
   const { error } = await supabase.storage
     .from(bucket)
-    .upload(path, file, {
-      cacheControl: '3600',
+    .upload(path, bodyBlob, {
+      cacheControl: '31536000', // 1 year — files are uniquely-named so safe
       upsert: false,
-      contentType: file.type || undefined,
+      contentType,
     })
   if (error) throw error
 
@@ -57,11 +153,9 @@ export async function uploadFile(file, { folder = 'misc', bucket = STORAGE_BUCKE
 
 /**
  * Delete a file by storage path (relative to bucket).
- * Silent on missing file. Returns true on success.
  */
 export async function deleteFile(path, bucket = STORAGE_BUCKET) {
   if (!path) return true
-  // Don't try to delete external URLs
   if (path.startsWith('http://') || path.startsWith('https://')) return true
 
   const { error } = await supabase.storage.from(bucket).remove([path])
