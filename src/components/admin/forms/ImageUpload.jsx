@@ -146,7 +146,7 @@ export function ImageUpload({ value, onChange, folder = 'misc', label = 'Image',
         </button>
       )}
 
-      {error && <p className="text-xs text-rose-400">{error}</p>}
+      {error && <p className="text-xs text-white/55">{error}</p>}
 
       <p className="text-[11px] text-white/35">
         Stored path: <span className="font-mono">{value || '—'}</span>

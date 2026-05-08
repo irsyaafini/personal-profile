@@ -19,8 +19,8 @@ export function Footer() {
   const year = new Date().getFullYear()
 
   return (
-    <footer className="relative border-t border-white/[0.06] mt-20">
-      <div className="container-xl py-12 sm:py-16">
+    <footer className="relative border-t border-white/[0.06] mt-14">
+      <div className="container-xl py-10 sm:py-12">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
             <Link to="/" className="font-display text-base sm:text-lg font-semibold tracking-tight text-white">
@@ -52,9 +52,9 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 line-accent" />
+        <div className="mt-8 line-accent" />
 
-        <div className="mt-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-[11px] text-white/40 uppercase tracking-[0.14em]">
+        <div className="mt-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-[11px] text-white/40 uppercase tracking-[0.14em]">
           <p>© {year} {profile?.full_name || 'Portfolio'}. {t('footer.all_rights', 'All rights reserved.')}</p>
         </div>
       </div>

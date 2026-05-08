@@ -6,45 +6,39 @@ import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/features/auth/useAuth'
 
 /**
- * Halaman login admin.
+ * TEMA FIX (AdminLoginPage):
+ * 1. Error alert: `border-rose-500/30 bg-rose-500/5 text-rose-300`
+ *    → `border-white/20 bg-white/[0.04] text-white/70` (monokrom)
+ * 2. Cooldown warning: `text-amber-400/70`
+ *    → `text-white/50` (monokrom)
  *
  * Keamanan:
  * - Redirect otomatis jika sudah login sebagai admin
  * - Rate limiting UI: tombol di-disable 5 detik setelah gagal 3 kali berturut-turut
- * - Error dari state navigasi (misal dari RequireAuth) ditampilkan otomatis
  */
 export default function AdminLoginPage() {
   const { signIn, session, isAdmin, loading } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const from = location.state?.from || '/admin'
+  const navigate   = useNavigate()
+  const location   = useLocation()
+  const from       = location.state?.from || '/admin'
 
-  const [form, setForm] = useState({ email: '', password: '' })
-  const [error, setError] = useState(location.state?.error || null)
+  const [form,       setForm]       = useState({ email: '', password: '' })
+  const [error,      setError]      = useState(location.state?.error || null)
   const [submitting, setSubmitting] = useState(false)
-  const [failCount, setFailCount] = useState(0)
-  const [cooldown, setCooldown] = useState(false)
+  const [failCount,  setFailCount]  = useState(0)
+  const [cooldown,   setCooldown]   = useState(false)
 
-  useEffect(() => {
-    document.title = 'Sign in — Admin'
-  }, [])
+  useEffect(() => { document.title = 'Sign in — Admin' }, [])
 
-  // Cooldown sederhana setelah 3 kali gagal berturut-turut
   useEffect(() => {
     if (failCount >= 3) {
       setCooldown(true)
-      const timer = setTimeout(() => {
-        setCooldown(false)
-        setFailCount(0)
-      }, 5000)
+      const timer = setTimeout(() => { setCooldown(false); setFailCount(0) }, 5000)
       return () => clearTimeout(timer)
     }
   }, [failCount])
 
-  // Jika sudah login & admin, langsung ke dashboard
-  if (!loading && session && isAdmin) {
-    return <Navigate to={from} replace />
-  }
+  if (!loading && session && isAdmin) return <Navigate to={from} replace />
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -123,15 +117,17 @@ export default function AdminLoginPage() {
             />
           </div>
 
+          {/* Error — monokrom (sebelumnya rose/merah) */}
           {error && (
-            <div className="flex items-start gap-2.5 px-3.5 py-2.5 rounded-lg border border-rose-500/30 bg-rose-500/5 text-sm text-rose-300">
+            <div className="flex items-start gap-2.5 px-3.5 py-2.5 rounded-lg border border-white/20 bg-white/[0.04] text-sm text-white/70">
               <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
+          {/* Cooldown — monokrom (sebelumnya amber/kuning) */}
           {cooldown && (
-            <p className="text-xs text-amber-400/70 text-center">
+            <p className="text-xs text-white/50 text-center">
               Terlalu banyak percobaan. Coba lagi dalam beberapa detik…
             </p>
           )}

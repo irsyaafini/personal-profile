@@ -50,7 +50,7 @@ export function Lightbox({ items, index, onClose, onChange }) {
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); onClose() }}
-        className="absolute top-4 right-4 sm:top-6 sm:right-6 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-slate-200 hover:bg-white/10 transition"
+        className="absolute top-4 right-4 sm:top-6 sm:right-6 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-white/80 hover:bg-white/10 transition"
         aria-label="Close"
       >
         <X className="h-5 w-5" />
@@ -61,7 +61,7 @@ export function Lightbox({ items, index, onClose, onChange }) {
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); prev() }}
-            className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/5 text-slate-200 hover:bg-white/10 transition"
+            className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/5 text-white/80 hover:bg-white/10 transition"
             aria-label="Previous"
           >
             <ChevronLeft className="h-5 w-5" />
@@ -69,7 +69,7 @@ export function Lightbox({ items, index, onClose, onChange }) {
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); next() }}
-            className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/5 text-slate-200 hover:bg-white/10 transition"
+            className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/5 text-white/80 hover:bg-white/10 transition"
             aria-label="Next"
           >
             <ChevronRight className="h-5 w-5" />
@@ -89,14 +89,14 @@ export function Lightbox({ items, index, onClose, onChange }) {
         {(current.title || current.caption) && (
           <div className="mt-4 text-center">
             {current.title && (
-              <h3 className="text-base sm:text-lg font-semibold text-slate-100">
+              <h3 className="text-base sm:text-lg font-semibold text-white/90">
                 {current.title}
               </h3>
             )}
             {current.caption && (
-              <p className="mt-1 text-sm text-slate-400">{current.caption}</p>
+              <p className="mt-1 text-sm text-white/55">{current.caption}</p>
             )}
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 text-xs text-white/40">
               {index + 1} / {total}
             </p>
           </div>

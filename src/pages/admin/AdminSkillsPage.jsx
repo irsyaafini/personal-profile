@@ -1,3 +1,4 @@
+/* TEMA FIX: Delete button hover: hover:text-rose-300/border-rose-400 → hover:text-white/border-white/30 */
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus, Pencil, Trash2, Code2, Save, Loader2, X } from 'lucide-react'
@@ -103,7 +104,7 @@ export default function AdminSkillsPage() {
                       </button>
                       <button
                         onClick={() => setConfirmId(s.id)}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-white/55 hover:text-rose-300 hover:border-rose-400/40 transition"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-white/55 hover:text-white hover:border-white/30 transition"
                         aria-label="Delete"
                       >
                         <Trash2 className="h-3.5 w-3.5" />

@@ -94,7 +94,7 @@ export default function AdminDashboardPage() {
         />
       </div>
 
-      <div className="mt-12">
+      <div className="mt-8">
         <h2 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/55 mb-4">
           Quick links
         </h2>

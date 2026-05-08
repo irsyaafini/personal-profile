@@ -5,6 +5,7 @@ import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Card } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { Badge } from '@/components/ui/Badge'
+import { Reveal } from '@/components/common/Reveal'
 import { experiencesService } from '@/services/experiences.service'
 import { QUERY_KEYS } from '@/constants'
 import { useTranslation } from '@/features/i18n/useTranslation'
@@ -36,7 +37,7 @@ function TimelineItem({ item, last, t }) {
       )}
 
       <Card>
-        <div className="p-6 sm:p-7">
+        <div className="p-5 sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
             <div>
               <h3 className="text-base sm:text-lg font-semibold text-white tracking-tight">
@@ -84,13 +85,15 @@ export function ExperienceSection() {
   return (
     <section id="experience" className="section-gap">
       <Container size="lg">
-        <SectionHeader
-          eyebrow={t('experience.eyebrow', 'Timeline')}
-          title={t('sections.experience', 'Experience & Education')}
-          description={t('experience.description', "A chronological view of where I've worked, studied, and what I've earned along the way.")}
-        />
+        <Reveal direction="up">
+          <SectionHeader
+            eyebrow={t('experience.eyebrow', 'Timeline')}
+            title={t('sections.experience', 'Experience & Education')}
+            description={t('experience.description', "A chronological view of where I've worked, studied, and what I've earned along the way.")}
+          />
+        </Reveal>
 
-        <div className="mt-12 sm:mt-16 space-y-10">
+        <div className="mt-8 sm:mt-10 space-y-6">
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="relative pl-12 sm:pl-16">
@@ -98,14 +101,27 @@ export function ExperienceSection() {
               </div>
             ))
           ) : !items || items.length === 0 ? (
-            <Card>
-              <div className="p-8 text-center text-white/40 text-sm">
-                {t('experience.no_experience', 'No experiences added yet.')}
-              </div>
-            </Card>
+            <Reveal direction="up">
+              <Card>
+                <div className="p-8 text-center text-white/40 text-sm">
+                  {t('experience.no_experience', 'No experiences added yet.')}
+                </div>
+              </Card>
+            </Reveal>
           ) : (
+            // Timeline items: tiap item slide dari kiri dengan stagger.
+            // Pakai delay manual berdasarkan index, BUKAN RevealGroup,
+            // karena tiap item sudah punya wrapper relative-positioned
+            // untuk dot/line — kita tidak mau menambah div pembungkus.
             items.map((it, i) => (
-              <TimelineItem key={it.id} item={it} last={i === items.length - 1} t={t} />
+              <Reveal
+                key={it.id}
+                direction="left"
+                delay={i * 100}
+                threshold={0.1}
+              >
+                <TimelineItem item={it} last={i === items.length - 1} t={t} />
+              </Reveal>
             ))
           )}
         </div>

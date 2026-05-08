@@ -69,7 +69,7 @@ const SmartImage = memo(function SmartImage({
         />
       )}
       {(errored || !src) && (
-        <div className="absolute inset-0 flex items-center justify-center text-xs uppercase tracking-widest text-slate-600 select-none">
+        <div className="absolute inset-0 flex items-center justify-center text-xs uppercase tracking-widest text-white/30 select-none">
           {alt || 'image'}
         </div>
       )}

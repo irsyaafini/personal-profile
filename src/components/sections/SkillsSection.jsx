@@ -4,6 +4,7 @@ import { Container } from '@/components/ui/Container'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { Card } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { Reveal, RevealGroup } from '@/components/common/Reveal'
 import { skillsService } from '@/services/skills.service'
 import { QUERY_KEYS } from '@/constants'
 import { useTranslation } from '@/features/i18n/useTranslation'
@@ -46,48 +47,62 @@ export function SkillsSection() {
   return (
     <section id="skills" className="section-gap">
       <Container>
-        <SectionHeader
-          eyebrow={t('skills.eyebrow', 'Tech Stack')}
-          title={t('sections.skills', 'Skills')}
-          description={t('skills.description', 'Tools and technologies I work with — calibrated by hands-on familiarity.')}
-        />
+        <Reveal direction="up">
+          <SectionHeader
+            eyebrow={t('skills.eyebrow', 'Tech Stack')}
+            title={t('sections.skills', 'Skills')}
+            description={t('skills.description', 'Tools and technologies I work with — calibrated by hands-on familiarity.')}
+          />
+        </Reveal>
 
-        <div className="mt-12 sm:mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {isLoading
-            ? Array.from({ length: 3 }).map((_, i) => (
-                <Card key={i}>
-                  <div className="p-7 space-y-5">
-                    <Skeleton className="h-5 w-1/3" />
-                    {Array.from({ length: 4 }).map((_, j) => (
-                      <Skeleton key={j} className="h-6" />
+        {isLoading ? (
+          <div className="mt-8 sm:mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Card key={i}>
+                <div className="p-5 space-y-4">
+                  <Skeleton className="h-5 w-1/3" />
+                  {Array.from({ length: 4 }).map((_, j) => (
+                    <Skeleton key={j} className="h-6" />
+                  ))}
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : categories.length === 0 ? (
+          <div className="mt-8 sm:mt-10">
+            <Reveal direction="up">
+              <Card>
+                <div className="p-7 text-center text-white/40 text-sm">
+                  {t('skills.no_skills', 'No skills added yet.')}
+                </div>
+              </Card>
+            </Reveal>
+          </div>
+        ) : (
+          // Cards di-stagger pakai RevealGroup
+          <RevealGroup
+            stagger={100}
+            baseDelay={120}
+            direction="up"
+            className="mt-8 sm:mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
+          >
+            {categories.map((cat) => (
+              <Card key={cat}>
+                <div className="p-7">
+                  <h3 className="flex items-center gap-2.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/60 mb-5">
+                    <Code2 className="h-3.5 w-3.5" />
+                    {cat}
+                  </h3>
+                  <div className="space-y-5">
+                    {grouped[cat].map((s) => (
+                      <SkillBar key={s.id} name={s.name} level={s.level} />
                     ))}
                   </div>
-                </Card>
-              ))
-            : categories.length === 0
-            ? (
-                <Card className="md:col-span-2 lg:col-span-3">
-                  <div className="p-7 text-center text-white/40 text-sm">
-                    {t('skills.no_skills', 'No skills added yet.')}
-                  </div>
-                </Card>
-              )
-            : categories.map((cat) => (
-                <Card key={cat}>
-                  <div className="p-7">
-                    <h3 className="flex items-center gap-2.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/60 mb-7">
-                      <Code2 className="h-3.5 w-3.5" />
-                      {cat}
-                    </h3>
-                    <div className="space-y-5">
-                      {grouped[cat].map((s) => (
-                        <SkillBar key={s.id} name={s.name} level={s.level} />
-                      ))}
-                    </div>
-                  </div>
-                </Card>
-              ))}
-        </div>
+                </div>
+              </Card>
+            ))}
+          </RevealGroup>
+        )}
       </Container>
     </section>
   )

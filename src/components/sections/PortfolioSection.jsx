@@ -8,14 +8,13 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { SmartImage } from '@/components/common/SmartImage'
+import { Reveal, RevealGroup } from '@/components/common/Reveal'
 import { useResearchList } from '@/features/research/useResearch'
 import { useTranslation } from '@/features/i18n/useTranslation'
 import { resolveImage } from '@/lib/storage'
 import { formatDate } from '@/utils'
 
 // OPTIMASI: Pisahkan ResearchCard sebagai memo component.
-// Sebelumnya: setiap render PortfolioSection membuat ulang semua cards
-// bahkan jika data tidak berubah (mis. akibat bahasa toggle di Navbar).
 const ResearchCard = memo(function ResearchCard({ item, t }) {
   const cover = resolveImage(item.cover_path)
 
@@ -26,8 +25,6 @@ const ResearchCard = memo(function ResearchCard({ item, t }) {
           src={cover}
           alt={item.title}
           containerClassName="aspect-[16/10] w-full"
-          // OPTIMASI: loading="lazy" + decoding="async" sudah default di SmartImage.
-          // Tidak perlu prop tambahan di sini.
           className="group-hover:scale-105 transition-transform duration-700"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" aria-hidden />
@@ -73,7 +70,6 @@ const ResearchCard = memo(function ResearchCard({ item, t }) {
   )
 })
 
-// OPTIMASI: Skeleton cards di-extract agar tidak dibuat inline setiap render
 const SKELETON_ITEMS = Array.from({ length: 3 })
 
 export function PortfolioSection() {
@@ -83,26 +79,30 @@ export function PortfolioSection() {
   return (
     <section id="portfolio" className="section-gap">
       <Container>
-        <SectionHeader
-          eyebrow={t('portfolio.eyebrow', 'Work & Research')}
-          title={t('sections.portfolio', 'Research & Portfolio')}
-          description={t(
-            'portfolio.description',
-            'A selection of recent research projects. Click through for full context, methodology, and findings.'
-          )}
-        />
+        <Reveal direction="up">
+          <SectionHeader
+            eyebrow={t('portfolio.eyebrow', 'Work & Research')}
+            title={t('sections.portfolio', 'Research & Portfolio')}
+            description={t(
+              'portfolio.description',
+              'A selection of recent research projects. Click through for full context, methodology, and findings.'
+            )}
+          />
+        </Reveal>
 
-        <div className="mt-12 sm:mt-16">
-          <div className="flex items-end justify-between mb-7">
-            <h3 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/60 flex items-center gap-2.5">
-              <FlaskConical className="h-3.5 w-3.5" aria-hidden />
-              {t('portfolio.research_projects', 'Research Projects')}
-            </h3>
-            <Button as={Link} to="/research" variant="ghost" className="text-[11px] uppercase tracking-[0.18em]">
-              {t('common.view_all', 'View all')}
-              <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
-            </Button>
-          </div>
+        <div className="mt-8 sm:mt-10">
+          <Reveal direction="up" delay={120}>
+            <div className="flex items-end justify-between mb-5">
+              <h3 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/60 flex items-center gap-2.5">
+                <FlaskConical className="h-3.5 w-3.5" aria-hidden />
+                {t('portfolio.research_projects', 'Research Projects')}
+              </h3>
+              <Button as={Link} to="/research" variant="ghost" className="text-[11px] uppercase tracking-[0.18em]">
+                {t('common.view_all', 'View all')}
+                <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+              </Button>
+            </div>
+          </Reveal>
 
           {loadingResearch ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -118,17 +118,24 @@ export function PortfolioSection() {
               ))}
             </div>
           ) : !research?.length ? (
-            <Card>
-              <div className="p-10 text-center text-sm text-white/40">
-                {t('portfolio.no_research', 'No research projects yet.')}
-              </div>
-            </Card>
+            <Reveal direction="up" delay={200}>
+              <Card>
+                <div className="p-10 text-center text-sm text-white/40">
+                  {t('portfolio.no_research', 'No research projects yet.')}
+                </div>
+              </Card>
+            </Reveal>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <RevealGroup
+              stagger={100}
+              baseDelay={200}
+              direction="up"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
               {research.slice(0, 6).map((r) => (
                 <ResearchCard key={r.id} item={r} t={t} />
               ))}
-            </div>
+            </RevealGroup>
           )}
         </div>
       </Container>

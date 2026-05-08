@@ -22,10 +22,10 @@ export function ErrorBoundary() {
     <div className="min-h-screen flex items-center justify-center px-6 bg-noise">
       <div className="max-w-md text-center">
         <p className="section-label mb-4">{is404 ? '404' : 'Terjadi Kesalahan'}</p>
-        <h1 className="text-3xl sm:text-4xl font-semibold text-slate-100">
+        <h1 className="text-3xl sm:text-4xl font-semibold text-white/90">
           {is404 ? 'Halaman Tidak Ditemukan' : 'Ups, Ada yang Salah'}
         </h1>
-        <p className="mt-3 text-sm text-slate-400">{message}</p>
+        <p className="mt-3 text-sm text-white/55">{message}</p>
         <div className="mt-8 flex justify-center gap-3">
           <Button as={Link} to="/" variant="solid">
             Kembali ke Beranda
