@@ -69,18 +69,18 @@ export function AboutSection() {
                 </div>
               ) : (
                 <div className="grid sm:grid-cols-2 gap-x-8 gap-y-6">
-                  <InfoRow icon={Mail} label="Email" value={profile?.email} href={profile?.email && `mailto:${profile.email}`} />
-                  <InfoRow icon={Phone} label="Phone" value={profile?.phone} href={profile?.phone && `tel:${profile.phone}`} />
-                  <InfoRow icon={MapPin} label="Location" value={profile?.location} />
-                  <InfoRow icon={Globe} label="Website" value={profile?.website} href={profile?.website} />
+                  <InfoRow icon={Mail} label={t('about.email', 'Email')} value={profile?.email} href={profile?.email && `mailto:${profile.email}`} />
+                  <InfoRow icon={Phone} label={t('about.phone', 'Phone')} value={profile?.phone} href={profile?.phone && `tel:${profile.phone}`} />
+                  <InfoRow icon={MapPin} label={t('about.location', 'Location')} value={profile?.location} />
+                  <InfoRow icon={Globe} label={t('about.website', 'Website')} value={profile?.website} href={profile?.website} />
                   <InfoRow
                     icon={Calendar}
-                    label="Birth Date"
+                    label={t('about.birth_date', 'Birth Date')}
                     value={profile?.birth_date && formatDate(profile.birth_date)}
                   />
                   <InfoRow
                     icon={Languages}
-                    label="Languages"
+                    label={t('about.languages', 'Languages')}
                     value={Array.isArray(profile?.languages) ? profile.languages.join(', ') : profile?.languages}
                   />
                 </div>
@@ -93,7 +93,7 @@ export function AboutSection() {
             <div className="p-7 sm:p-9">
               <h3 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/50 mb-7 flex items-center gap-2.5">
                 <Heart className="h-3.5 w-3.5 text-white/70" />
-                Interests
+                {t('about.interests', 'Interests')}
               </h3>
 
               {isLoading ? (
@@ -111,7 +111,7 @@ export function AboutSection() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-white/40">No interests listed yet.</p>
+                <p className="text-sm text-white/40">{t('about.no_interests', 'No interests listed yet.')}</p>
               )}
             </div>
           </Card>

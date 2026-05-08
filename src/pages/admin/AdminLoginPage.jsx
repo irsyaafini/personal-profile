@@ -1,50 +1,73 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, Navigate } from 'react-router-dom'
-import { LogIn, Loader2 } from 'lucide-react'
+import { LogIn, Loader2, ShieldAlert } from 'lucide-react'
 import { Input, Label } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/features/auth/useAuth'
 
+/**
+ * Halaman login admin.
+ *
+ * Keamanan:
+ * - Redirect otomatis jika sudah login sebagai admin
+ * - Rate limiting UI: tombol di-disable 5 detik setelah gagal 3 kali berturut-turut
+ * - Error dari state navigasi (misal dari RequireAuth) ditampilkan otomatis
+ */
 export default function AdminLoginPage() {
-  const { signIn, session, loading } = useAuth()
+  const { signIn, session, isAdmin, loading } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const from = location.state?.from || '/admin'
 
   const [form, setForm] = useState({ email: '', password: '' })
-  const [error, setError] = useState(null)
+  const [error, setError] = useState(location.state?.error || null)
   const [submitting, setSubmitting] = useState(false)
+  const [failCount, setFailCount] = useState(0)
+  const [cooldown, setCooldown] = useState(false)
 
   useEffect(() => {
     document.title = 'Sign in — Admin'
   }, [])
 
-  // If already signed in, bounce straight to admin
-  if (!loading && session) {
+  // Cooldown sederhana setelah 3 kali gagal berturut-turut
+  useEffect(() => {
+    if (failCount >= 3) {
+      setCooldown(true)
+      const timer = setTimeout(() => {
+        setCooldown(false)
+        setFailCount(0)
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [failCount])
+
+  // Jika sudah login & admin, langsung ke dashboard
+  if (!loading && session && isAdmin) {
     return <Navigate to={from} replace />
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (cooldown) return
     setError(null)
     setSubmitting(true)
     try {
       await signIn(form)
       navigate(from, { replace: true })
     } catch (err) {
-      setError(err.message || 'Failed to sign in')
+      setError(err.message || 'Gagal masuk. Periksa email dan password.')
+      setFailCount((c) => c + 1)
     } finally {
       setSubmitting(false)
     }
   }
 
+  const isDisabled = submitting || cooldown
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center px-4 py-12 bg-noise">
-      {/* atmospheric glow */}
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-        aria-hidden
-      >
+      {/* Atmospheric glow */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden>
         <div
           className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[40rem] h-[40rem] rounded-full"
           style={{
@@ -64,7 +87,7 @@ export default function AdminLoginPage() {
             Admin Sign In
           </h1>
           <p className="mt-2 text-sm text-white/55">
-            Sign in to manage your portfolio content.
+            Masuk untuk mengelola konten portfolio kamu.
           </p>
         </div>
 
@@ -82,6 +105,7 @@ export default function AdminLoginPage() {
               placeholder="you@example.com"
               value={form.email}
               onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))}
+              disabled={isDisabled}
             />
           </div>
 
@@ -95,20 +119,28 @@ export default function AdminLoginPage() {
               placeholder="••••••••"
               value={form.password}
               onChange={(e) => setForm((s) => ({ ...s, password: e.target.value }))}
+              disabled={isDisabled}
             />
           </div>
 
           {error && (
-            <div className="px-3.5 py-2.5 rounded-lg border border-rose-500/30 bg-rose-500/5 text-sm text-rose-300">
-              {error}
+            <div className="flex items-start gap-2.5 px-3.5 py-2.5 rounded-lg border border-rose-500/30 bg-rose-500/5 text-sm text-rose-300">
+              <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>{error}</span>
             </div>
+          )}
+
+          {cooldown && (
+            <p className="text-xs text-amber-400/70 text-center">
+              Terlalu banyak percobaan. Coba lagi dalam beberapa detik…
+            </p>
           )}
 
           <Button
             as="button"
             type="submit"
             variant="solid"
-            disabled={submitting}
+            disabled={isDisabled}
             className="w-full justify-center"
           >
             {submitting ? (
@@ -126,7 +158,7 @@ export default function AdminLoginPage() {
         </form>
 
         <p className="mt-6 text-center text-xs text-white/40">
-          Admin accounts are managed in your Supabase project.
+          Akun admin dikelola melalui Supabase project kamu.
         </p>
       </div>
     </div>

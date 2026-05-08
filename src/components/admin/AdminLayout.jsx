@@ -3,17 +3,22 @@ import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom'
 import { LogOut, Menu, X, ExternalLink } from 'lucide-react'
 import { ADMIN_NAV_ITEMS } from '@/constants'
 import { useAuth } from '@/features/auth/useAuth'
+import { useProfile } from '@/features/profile/useProfile'
 import { cn } from '@/utils'
 
 export function AdminLayout() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { data: profile } = useProfile()
 
   const handleSignOut = async () => {
     await signOut()
     navigate('/admin/login', { replace: true })
   }
+
+  // Nama dinamis dari database, fallback ke 'Personal'
+  const displayName = profile?.full_name ?? 'Personal'
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white flex">
@@ -33,14 +38,11 @@ export function AdminLayout() {
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
-        {/* Brand */}
+        {/* Brand — tanpa logo "P", nama dari database */}
         <div className="px-6 py-6 border-b border-white/[0.06] flex items-center justify-between">
           <Link to="/admin" className="flex items-center gap-2.5">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-black font-display text-sm font-bold">
-              P
-            </span>
             <div>
-              <div className="font-display text-sm font-semibold tracking-tight">portfolio</div>
+              <div className="font-display text-sm font-semibold tracking-tight">{displayName}</div>
               <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">admin</div>
             </div>
           </Link>

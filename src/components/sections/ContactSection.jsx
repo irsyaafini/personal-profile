@@ -58,9 +58,9 @@ export function ContactSection() {
     <section id="contact" className="section-gap">
       <Container size="lg">
         <SectionHeader
-          eyebrow="Contact"
+          eyebrow={t('contact.eyebrow', 'Contact')}
           title={t('sections.contact', 'Get in Touch')}
-          description="Have a question, collaboration idea, or just want to say hi? Drop a message below."
+          description={t('contact.description', 'Have a question, collaboration idea, or just want to say hi? Drop a message below.')}
         />
 
         <div className="mt-12 sm:mt-16 grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -70,7 +70,7 @@ export function ContactSection() {
               <div className="p-7 sm:p-8">
                 <h3 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/60 mb-7 flex items-center gap-2.5">
                   <span className="h-px w-6 bg-white/30" />
-                  Reach me at
+                  {t('contact.reach_me_at', 'Reach me at')}
                 </h3>
 
                 <div className="space-y-5">
@@ -84,7 +84,7 @@ export function ContactSection() {
                       </span>
                       <div>
                         <p className="text-[10px] uppercase tracking-[0.18em] text-white/40 font-semibold">
-                          Email
+                          {t('about.email', 'Email')}
                         </p>
                         <p className="text-sm text-white/85 group-hover:text-white transition">
                           {profile.email}
@@ -103,7 +103,7 @@ export function ContactSection() {
                       </span>
                       <div>
                         <p className="text-[10px] uppercase tracking-[0.18em] text-white/40 font-semibold">
-                          Phone
+                          {t('about.phone', 'Phone')}
                         </p>
                         <p className="text-sm text-white/85 group-hover:text-white transition">
                           {profile.phone}
@@ -119,7 +119,7 @@ export function ContactSection() {
                       </span>
                       <div>
                         <p className="text-[10px] uppercase tracking-[0.18em] text-white/40 font-semibold">
-                          Location
+                          {t('about.location', 'Location')}
                         </p>
                         <p className="text-sm text-white/85">{profile.location}</p>
                       </div>
@@ -132,9 +132,9 @@ export function ContactSection() {
             <Card>
               <div className="p-7 sm:p-8">
                 <p className="text-sm text-white/55 leading-relaxed">
-                  I usually reply within{' '}
-                  <span className="text-white font-medium">1–2 business days</span>.
-                  For urgent matters, email is the fastest way.
+                  {t('contact.reply_note', 'I usually reply within')}{' '}
+                  <span className="text-white font-medium">{t('contact.reply_time', '1–2 business days')}</span>
+                  {t('contact.reply_note2', '. For urgent matters, email is the fastest way.')}
                 </p>
               </div>
             </Card>
@@ -145,7 +145,7 @@ export function ContactSection() {
             <form onSubmit={handleSubmit} className="p-7 sm:p-9 space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <Label htmlFor="name">Name</Label>
+                  <Label htmlFor="name">{t('contact.name_label', 'Name')}</Label>
                   <Input
                     id="name"
                     type="text"
@@ -157,7 +157,7 @@ export function ContactSection() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('contact.email_label', 'Email')}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -171,7 +171,7 @@ export function ContactSection() {
               </div>
 
               <div>
-                <Label htmlFor="subject">Subject</Label>
+                <Label htmlFor="subject">{t('contact.subject_label', 'Subject')}</Label>
                 <Input
                   id="subject"
                   type="text"
@@ -182,7 +182,7 @@ export function ContactSection() {
               </div>
 
               <div>
-                <Label htmlFor="message">Message</Label>
+                <Label htmlFor="message">{t('contact.message_label', 'Message')}</Label>
                 <Textarea
                   id="message"
                   rows={6}

@@ -13,8 +13,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl ?? '', supabaseAnonKey ?? '', {
   auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
+    persistSession: true,       // Session disimpan di localStorage
+    autoRefreshToken: true,     // Token di-refresh otomatis sebelum expire
+    detectSessionInUrl: true,   // Untuk OAuth callback / magic link
   },
 })

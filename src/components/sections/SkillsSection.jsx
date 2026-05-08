@@ -47,9 +47,9 @@ export function SkillsSection() {
     <section id="skills" className="section-gap">
       <Container>
         <SectionHeader
-          eyebrow="Tech Stack"
+          eyebrow={t('skills.eyebrow', 'Tech Stack')}
           title={t('sections.skills', 'Skills')}
-          description="Tools and technologies I work with — calibrated by hands-on familiarity."
+          description={t('skills.description', 'Tools and technologies I work with — calibrated by hands-on familiarity.')}
         />
 
         <div className="mt-12 sm:mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -67,7 +67,9 @@ export function SkillsSection() {
             : categories.length === 0
             ? (
                 <Card className="md:col-span-2 lg:col-span-3">
-                  <div className="p-7 text-center text-white/40 text-sm">No skills added yet.</div>
+                  <div className="p-7 text-center text-white/40 text-sm">
+                    {t('skills.no_skills', 'No skills added yet.')}
+                  </div>
                 </Card>
               )
             : categories.map((cat) => (

@@ -9,12 +9,14 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SmartImage } from '@/components/common/SmartImage'
 import { useResearch } from '@/features/research/useResearch'
+import { useTranslation } from '@/features/i18n/useTranslation'
 import { resolveImage } from '@/lib/storage'
 import { formatDateRange } from '@/utils'
 
 export default function ResearchDetailPage() {
   const { id } = useParams()
   const { data: item, isLoading, isError } = useResearch(id)
+  const { t } = useTranslation()
 
   if (isLoading) {
     return (
@@ -33,12 +35,12 @@ export default function ResearchDetailPage() {
       <Container className="pt-10 pb-20">
         <EmptyState
           icon={FlaskConical}
-          title="Research project not found"
-          description="This research project may have been removed or the link is invalid."
+          title={t('research.not_found_title', 'Research project not found')}
+          description={t('research.not_found_desc', 'This research project may have been removed or the link is invalid.')}
           action={
             <Button as={Link} to="/research" variant="cyan">
               <ArrowLeft className="h-4 w-4" />
-              Back to research
+              {t('research.back_research', 'Back to research')}
             </Button>
           }
         />
@@ -57,7 +59,7 @@ export default function ResearchDetailPage() {
         className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-cyan-300 transition mb-6"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to research
+        {t('research.back_research', 'Back to research')}
       </Link>
 
       <div className="flex items-center gap-2 mb-4 flex-wrap">
@@ -98,13 +100,13 @@ export default function ResearchDetailPage() {
           {item.demo_url && (
             <Button as="a" href={item.demo_url} target="_blank" rel="noreferrer" variant="solid">
               <ExternalLink className="h-4 w-4" />
-              View Demo
+              {t('research.view_demo', 'View Demo')}
             </Button>
           )}
           {item.repo_url && (
             <Button as="a" href={item.repo_url} target="_blank" rel="noreferrer" variant="cyan">
               <Github className="h-4 w-4" />
-              View Repository
+              {t('research.view_repo', 'View Repository')}
             </Button>
           )}
         </div>
@@ -126,7 +128,7 @@ export default function ResearchDetailPage() {
         <Card className="mt-10">
           <div className="p-6 sm:p-8">
             <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-widest mb-4">
-              Description
+              {t('research.description_heading', 'Description')}
             </h2>
             <div className="text-base text-slate-300 leading-relaxed whitespace-pre-line">
               {item.description}

@@ -14,17 +14,17 @@ import { useTranslation } from '@/features/i18n/useTranslation'
 import { resolveImage } from '@/lib/storage'
 import { formatDate, truncateText, cn } from '@/utils'
 
-const STATUSES = [
-  { value: 'all', label: 'All' },
-  { value: 'ongoing', label: 'Ongoing' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'published', label: 'Published' },
-]
-
 export default function ResearchPage() {
   const { t } = useTranslation()
   const { data, isLoading } = useResearchList()
   const [filter, setFilter] = useState('all')
+
+  const STATUSES = [
+    { value: 'all', label: t('research.filter_all', 'All') },
+    { value: 'ongoing', label: t('research.filter_ongoing', 'Ongoing') },
+    { value: 'completed', label: t('research.filter_completed', 'Completed') },
+    { value: 'published', label: t('research.filter_published', 'Published') },
+  ]
 
   const filtered = useMemo(() => {
     if (!data) return []
@@ -39,13 +39,13 @@ export default function ResearchPage() {
         className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-cyan-300 transition mb-6"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to home
+        {t('research.back_home', 'Back to home')}
       </Link>
 
       <SectionHeader
-        eyebrow="Research"
-        title="Research Projects"
-        description="Active investigations and completed studies — explore the methodology, code, and findings of each."
+        eyebrow={t('research.eyebrow', 'Research')}
+        title={t('research.title', 'Research Projects')}
+        description={t('research.description', 'Active investigations and completed studies — explore the methodology, code, and findings of each.')}
       />
 
       {/* Filter tabs */}
@@ -84,8 +84,10 @@ export default function ResearchPage() {
           <div className="col-span-full">
             <EmptyState
               icon={FlaskConical}
-              title="No research projects found"
-              description={filter !== 'all' ? 'Try a different filter.' : 'No research projects added yet.'}
+              title={t('research.no_projects', 'No research projects found')}
+              description={filter !== 'all'
+                ? t('research.no_projects_filter', 'Try a different filter.')
+                : t('research.no_projects_empty', 'No research projects added yet.')}
             />
           </div>
         ) : (
@@ -152,7 +154,7 @@ export default function ResearchPage() {
                       </a>
                     )}
                     <Link to={`/research/${item.id}`} className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-cyan-400 hover:text-cyan-300 transition">
-                      View details
+                      {t('research.view_details', 'View details')}
                       <ArrowUpRight className="h-3.5 w-3.5" />
                     </Link>
                   </div>

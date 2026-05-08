@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Mail } from 'lucide-react'
 import { Github, Linkedin, Twitter, Instagram } from '@/components/ui/BrandIcons'
 import { useProfile } from '@/features/profile/useProfile'
+import { useTranslation } from '@/features/i18n/useTranslation'
 
 const ICONS = {
   github: Github,
@@ -13,6 +14,7 @@ const ICONS = {
 
 export function Footer() {
   const { data: profile } = useProfile()
+  const { t } = useTranslation()
   const socials = profile?.socials ?? {}
   const year = new Date().getFullYear()
 
@@ -25,7 +27,7 @@ export function Footer() {
               portfolio
             </Link>
             <p className="mt-2.5 text-sm text-white/50 max-w-md leading-relaxed">
-              {profile?.headline || 'Personal portfolio · Research, projects, and a little bit of me.'}
+              {profile?.headline || t('footer.headline_default', 'Personal portfolio · Research, projects, and a little bit of me.')}
             </p>
           </div>
 
@@ -53,8 +55,7 @@ export function Footer() {
         <div className="mt-10 line-accent" />
 
         <div className="mt-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-[11px] text-white/40 uppercase tracking-[0.14em]">
-          <p>© {year} {profile?.full_name || 'Portfolio'}. All rights reserved.</p>
-          <p>Built with React · Tailwind · Supabase</p>
+          <p>© {year} {profile?.full_name || 'Portfolio'}. {t('footer.all_rights', 'All rights reserved.')}</p>
         </div>
       </div>
     </footer>

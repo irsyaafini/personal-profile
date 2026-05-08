@@ -10,15 +10,18 @@ import { QUERY_KEYS } from '@/constants'
 import { useTranslation } from '@/features/i18n/useTranslation'
 import { formatDateRange } from '@/utils'
 
-const TYPE_META = {
-  work: { icon: Briefcase, label: 'Work' },
-  education: { icon: GraduationCap, label: 'Education' },
-  certification: { icon: BadgeCheck, label: 'Certification' },
-  award: { icon: Award, label: 'Award' },
+function getTypeMeta(type, t) {
+  const map = {
+    work: { icon: Briefcase, label: t('experience.type_work', 'Work') },
+    education: { icon: GraduationCap, label: t('experience.type_education', 'Education') },
+    certification: { icon: BadgeCheck, label: t('experience.type_certification', 'Certification') },
+    award: { icon: Award, label: t('experience.type_award', 'Award') },
+  }
+  return map[type] ?? map.work
 }
 
-function TimelineItem({ item, last }) {
-  const meta = TYPE_META[item.type] ?? TYPE_META.work
+function TimelineItem({ item, last, t }) {
+  const meta = getTypeMeta(item.type, t)
   const Icon = meta.icon
 
   return (
@@ -82,9 +85,9 @@ export function ExperienceSection() {
     <section id="experience" className="section-gap">
       <Container size="lg">
         <SectionHeader
-          eyebrow="Timeline"
+          eyebrow={t('experience.eyebrow', 'Timeline')}
           title={t('sections.experience', 'Experience & Education')}
-          description="A chronological view of where I've worked, studied, and what I've earned along the way."
+          description={t('experience.description', "A chronological view of where I've worked, studied, and what I've earned along the way.")}
         />
 
         <div className="mt-12 sm:mt-16 space-y-10">
@@ -97,12 +100,12 @@ export function ExperienceSection() {
           ) : !items || items.length === 0 ? (
             <Card>
               <div className="p-8 text-center text-white/40 text-sm">
-                No experiences added yet.
+                {t('experience.no_experience', 'No experiences added yet.')}
               </div>
             </Card>
           ) : (
             items.map((it, i) => (
-              <TimelineItem key={it.id} item={it} last={i === items.length - 1} />
+              <TimelineItem key={it.id} item={it} last={i === items.length - 1} t={t} />
             ))
           )}
         </div>
