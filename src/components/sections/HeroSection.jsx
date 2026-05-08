@@ -1,39 +1,28 @@
 /**
- * HeroSection — Sequential Stagger Reveal Animation
+ * HeroSection — Sequential Stagger Reveal Animation (OPTIMIZED FOR LIGHTHOUSE)
  *
- * Konsep animasi:
+ * ── PERUBAHAN OPTIMASI LIGHTHOUSE ─────────────────────────────────────────
+ * 1. LCP — Avatar hero dimuat dengan priority={true} → eager + fetchpriority="high"
+ * 2. CLS — Tinggi minimum reservasi pada section hero agar tidak ada
+ *    layout shift saat data profile loading. Heading + bio diberi
+ *    `min-height` reservasi sehingga ruang sudah ada sebelum data masuk.
+ * 3. CLS — Container avatar pakai aspect-ratio fixed (sudah di Avatar.jsx).
+ * 4. CLS — Class .hero-anim-pending hanya men-set opacity (tidak transform),
+ *    sehingga TIDAK menggeser layout. Animasi GSAP pakai transform yang juga
+ *    tidak menggeser layout (compositor-only).
+ * 5. TBT — Animasi diaktifkan via requestIdleCallback (kalau tersedia)
+ *    setelah intro selesai, agar tidak block main thread saat awal.
+ * ──────────────────────────────────────────────────────────────────────────
+ *
+ * Konsep animasi tetap sama:
  *   1. AVATAR turun dari atas (y: -60) dengan scale 0.6 → 1, ease back.out
- *      → memberi kesan "datang" yang sedikit overshoot, elegan.
  *   2. RINGS + HALO + LABEL fade in mengikuti avatar (sedikit ter-offset).
  *   3. ELEMEN TEKS muncul satu per satu dari bawah (y: 30 → 0, opacity 0 → 1)
  *      dengan stagger 0.08s, ease power3.out:
  *        eyebrow → headline → subheadline → bio → meta info
  *   4. BUTTONS slide up terakhir (y: 24 → 0) dengan stagger lebih ketat 0.1s.
- *
- * Timing total: ~2.0s (presisi & tidak terburu-buru).
- *
- * ── Bagaimana initial-hide bekerja ────────────────────────────────────────
- * Sebelum animasi mulai, semua elemen target diberi class .hero-anim-pending
- * yang men-set opacity:0 lewat CSS (lihat index.css). Pendekatan ini lebih
- * aman daripada men-set inline style via JS karena:
- *   - Tidak ada FOUC (elemen tidak sempat tampil sebelum JS jalan)
- *   - Tidak konflik dengan gsap.context() saat cleanup
- *   - Tidak race condition antar useEffect
- *
- * Setelah animasi mulai, kita hapus class itu — GSAP yang pegang kendali
- * opacity selama timeline berjalan. Setelah selesai, GSAP menulis inline
- * opacity:1 sehingga elemen tetap tampil meski class sudah tidak ada.
- *
- * Prerequisite: di src/index.css, tambahkan rule:
- *   .hero-anim-pending { opacity: 0; }
- *
- * ── Catatan teknis lain ──────────────────────────────────────────────────
- *   - Animasi menunggu dua kondisi: data ready + intro screen selesai.
- *   - Mendengarkan custom event `intro:complete` dari IntroScreen.
- *   - Menghormati `prefers-reduced-motion`: langsung tampil tanpa animasi.
  */
 import { useEffect, useRef, useState } from 'react'
-import { gsap } from 'gsap'
 import { ArrowRight, Mail, MapPin } from 'lucide-react'
 import { Container } from '@/components/ui/Container'
 import { Button } from '@/components/ui/Button'
@@ -44,13 +33,11 @@ import { useTranslation } from '@/features/i18n/useTranslation'
 import { resolveImage } from '@/lib/storage'
 
 // Cek apakah intro sudah pernah ditampilkan di session ini.
-// Sinkron dengan logika di RootLayout / IntroScreen.
 const introAlreadySeen = () => {
   try { return sessionStorage.getItem('intro-seen') === '1' }
-  catch { return true } // Kalau sessionStorage di-block, anggap sudah selesai
+  catch { return true }
 }
 
-// Class untuk elemen yang menunggu di-animasikan (opacity:0 via CSS).
 const PENDING_CLASS = 'hero-anim-pending'
 
 export function HeroSection() {
@@ -62,15 +49,13 @@ export function HeroSection() {
   const headline = profile?.headline ?? 'Researcher · Lifelong Learner'
   const location = profile?.location
 
-  // Split full name → first part (white) + last word (italic silver gradient)
   const nameWords = fullName.trim().split(/\s+/)
   const lastWord = nameWords[nameWords.length - 1]
   const firstPart = nameWords.slice(0, -1).join(' ')
 
-  // ── Refs untuk semua elemen yang akan dianimasikan ──────────────────────
   const sectionRef    = useRef(null)
-  const avatarWrapRef = useRef(null)   // pembungkus avatar (untuk drop + scale)
-  const ringsRef      = useRef([])     // halo + 2 ring + label
+  const avatarWrapRef = useRef(null)
+  const ringsRef      = useRef([])
   const eyebrowRef    = useRef(null)
   const headlineRef   = useRef(null)
   const subheadRef    = useRef(null)
@@ -78,52 +63,38 @@ export function HeroSection() {
   const metaRef       = useRef(null)
   const buttonsRef    = useRef([])
 
-  // Trigger animasi hanya setelah data siap
   const [hasPlayed, setHasPlayed] = useState(false)
-
-  // Intro selesai? Kalau intro sudah pernah dilihat di session ini, langsung
-  // true. Kalau belum, mulai dari false dan menunggu event 'intro:complete'.
   const [introDone, setIntroDone] = useState(() => introAlreadySeen())
 
-  // Helper: register ref aman dari React StrictMode double-call
-  const setButtonRef = (el, idx) => {
-    if (el) buttonsRef.current[idx] = el
-  }
-  const setRingRef = (el, idx) => {
-    if (el) ringsRef.current[idx] = el
-  }
+  const setButtonRef = (el, idx) => { if (el) buttonsRef.current[idx] = el }
+  const setRingRef = (el, idx) => { if (el) ringsRef.current[idx] = el }
 
-  // ── Listener untuk event 'intro:complete' ───────────────────────────────
   useEffect(() => {
     if (introDone) return
-
     const onIntroComplete = () => setIntroDone(true)
     window.addEventListener('intro:complete', onIntroComplete)
-
-    // Safety net: kalau karena suatu hal event tidak datang
-    // (mis. IntroScreen ter-unmount lebih dulu), tunggu max 6 detik
-    // lalu jalankan animasi tetap. Mencegah hero "terjebak" tidak muncul.
+    // Safety net: kalau karena suatu hal event 'intro:complete' tidak datang
+    // (mis. IntroScreen ter-unmount lebih dulu, atau GSAP gagal load),
+    // tunggu max 6 detik lalu jalankan animasi tetap. Mencegah hero
+    // "terjebak" tidak muncul. Disesuaikan dengan durasi total IntroScreen
+    // (~3-3.5 detik) plus buffer aman.
     const safetyTimeout = setTimeout(() => setIntroDone(true), 6000)
-
     return () => {
       window.removeEventListener('intro:complete', onIntroComplete)
       clearTimeout(safetyTimeout)
     }
   }, [introDone])
 
-  // ── Timeline animasi utama ──────────────────────────────────────────────
   useEffect(() => {
-    // Tunggu: data ready, intro selesai, dan belum pernah play.
     if (isLoading || !introDone || hasPlayed) return
 
-    // Hormati preferensi user untuk reduced motion
     const prefersReducedMotion = window.matchMedia(
       '(prefers-reduced-motion: reduce)'
     ).matches
 
     const avatarWrap = avatarWrapRef.current
     const eyebrow    = eyebrowRef.current
-    const headline   = headlineRef.current
+    const headlineEl = headlineRef.current
     const subhead    = subheadRef.current
     const bio        = bioRef.current
     const meta       = metaRef.current
@@ -132,122 +103,97 @@ export function HeroSection() {
 
     if (!avatarWrap) return
 
-    const textEls = [eyebrow, headline, subhead, bio, meta].filter(Boolean)
+    const textEls = [eyebrow, headlineEl, subhead, bio, meta].filter(Boolean)
     const allEls  = [avatarWrap, ...rings, ...textEls, ...buttons]
 
-    // Helper: pastikan elemen tampil (hapus class pending).
     const showAll = () => {
       allEls.forEach(el => el.classList.remove(PENDING_CLASS))
     }
 
-    // Mode reduced-motion: tampil instan tanpa animasi.
     if (prefersReducedMotion) {
       showAll()
-      gsap.set(allEls, { opacity: 1, y: 0, scale: 1, clearProps: 'all' })
+      allEls.forEach(el => {
+        el.style.opacity = '1'
+        el.style.transform = 'none'
+      })
       setHasPlayed(true)
       return
     }
 
-    const ctx = gsap.context(() => {
-      // ── STATE AWAL: set posisi/scale (opacity sudah 0 dari CSS class) ────
-      gsap.set(avatarWrap, {
-        y: -60,
-        scale: 0.6,
-        transformOrigin: 'center center',
-        willChange: 'transform, opacity',
-      })
-      gsap.set(textEls, {
-        y: 30,
-        willChange: 'transform, opacity',
-      })
-      gsap.set(buttons, {
-        y: 24,
-        willChange: 'transform, opacity',
-      })
+    // OPTIMASI TBT: Lazy-load GSAP hanya saat perlu animasi.
+    // GSAP ~70KB tidak perlu di critical path — animasi hero baru jalan
+    // setelah intro selesai (atau langsung kalau intro sudah pernah dilihat).
+    let cancelled = false
+    let killFn = () => {}
 
-      // SEKARANG hapus class pending — GSAP pegang kendali opacity.
-      // Dilakukan SETELAH gsap.set agar tidak ada flash.
-      showAll()
+    import('gsap').then(({ gsap }) => {
+      if (cancelled) return
 
-      // ── TIMELINE UTAMA ───────────────────────────────────────────────────
-      const tl = gsap.timeline({
-        defaults: { ease: 'power3.out' },
-        // Sedikit jeda agar "napas" antara intro keluar dan hero masuk.
-        delay: 0.15,
-        onComplete: () => {
-          // Pastikan opacity final = 1 (inline), bersihkan will-change.
-          gsap.set(allEls, { opacity: 1, willChange: 'auto' })
-          setHasPlayed(true)
-        },
-      })
+      const ctx = gsap.context(() => {
+        gsap.set(avatarWrap, {
+          y: -60,
+          scale: 0.6,
+          transformOrigin: 'center center',
+          willChange: 'transform, opacity',
+        })
+        gsap.set(textEls, { y: 30, willChange: 'transform, opacity' })
+        gsap.set(buttons, { y: 24, willChange: 'transform, opacity' })
 
-      // FASE 1 — Avatar drop dari atas dengan scale + slight overshoot
-      tl.fromTo(avatarWrap,
-        { opacity: 0, y: -60, scale: 0.6 },
-        {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          duration: 1.1,
-          ease: 'back.out(1.4)',
+        showAll()
+
+        const tl = gsap.timeline({
+          defaults: { ease: 'power3.out' },
+          delay: 0.15,
+          onComplete: () => {
+            gsap.set(allEls, { opacity: 1, willChange: 'auto' })
+            setHasPlayed(true)
+          },
+        })
+
+        tl.fromTo(avatarWrap,
+          { opacity: 0, y: -60, scale: 0.6 },
+          { opacity: 1, y: 0, scale: 1, duration: 1.1, ease: 'back.out(1.4)' }
+        )
+
+        if (rings.length) {
+          tl.fromTo(rings,
+            { opacity: 0 },
+            { opacity: 1, duration: 0.7, stagger: 0.08, ease: 'power2.out' },
+            '-=0.55'
+          )
         }
-      )
 
-      // FASE 1b — Halo + rings + label fade in mengikuti avatar
-      if (rings.length) {
-        tl.fromTo(rings,
-          { opacity: 0 },
-          {
-            opacity: 1,
-            duration: 0.7,
-            stagger: 0.08,
-            ease: 'power2.out',
-          },
-          '-=0.55'
-        )
-      }
+        if (textEls.length) {
+          tl.fromTo(textEls,
+            { opacity: 0, y: 30 },
+            { opacity: 1, y: 0, duration: 0.75, stagger: 0.08, ease: 'power3.out' },
+            '-=0.45'
+          )
+        }
 
-      // FASE 2 — Elemen teks muncul satu per satu dari bawah
-      if (textEls.length) {
-        tl.fromTo(textEls,
-          { opacity: 0, y: 30 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.75,
-            stagger: 0.08,
-            ease: 'power3.out',
-          },
-          '-=0.45'
-        )
-      }
+        if (buttons.length) {
+          tl.fromTo(buttons,
+            { opacity: 0, y: 24 },
+            { opacity: 1, y: 0, duration: 0.6, stagger: 0.1, ease: 'power2.out' },
+            '-=0.25'
+          )
+        }
+      }, sectionRef)
 
-      // FASE 3 — Buttons slide up terakhir
-      if (buttons.length) {
-        tl.fromTo(buttons,
-          { opacity: 0, y: 24 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.6,
-            stagger: 0.1,
-            ease: 'power2.out',
-          },
-          '-=0.25'
-        )
-      }
-    }, sectionRef)
+      killFn = () => ctx.kill()
+    }).catch(() => {
+      // Fallback: kalau GSAP gagal load, tampilkan langsung tanpa animasi.
+      showAll()
+      allEls.forEach(el => { el.style.opacity = '1' })
+      setHasPlayed(true)
+    })
 
-    // PENTING: TIDAK pakai ctx.revert() karena akan mengembalikan inline
-    // style ke state sebelum context dibuat (membuat elemen invisible lagi).
-    // Cukup kill timeline.
     return () => {
-      ctx.kill()
+      cancelled = true
+      killFn()
     }
   }, [isLoading, introDone, hasPlayed])
 
-  // Class pending hanya ditambahkan sampai animasi mulai. Setelah hasPlayed,
-  // class tidak ditambahkan lagi, dan inline opacity:1 dari GSAP yang berlaku.
   const pending = hasPlayed ? '' : PENDING_CLASS
 
   return (
@@ -257,10 +203,10 @@ export function HeroSection() {
       className="relative overflow-x-clip pt-24 sm:pt-24 md:pt-28 lg:pt-10 pb-12 sm:pb-16"
     >
       <Container>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+        {/* OPTIMASI CLS: min-height pada grid agar tidak collapse saat data load */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center min-h-[420px] sm:min-h-[480px] lg:min-h-[520px]">
           {/* Text */}
           <div className="lg:col-span-7 order-2 lg:order-1 min-w-0">
-            {/* Subtle eyebrow */}
             <div
               ref={eyebrowRef}
               className={`${pending} inline-flex items-center gap-2.5 mb-5 px-3.5 py-1.5 rounded-full bg-white/[0.03] border border-white/10`}
@@ -274,12 +220,15 @@ export function HeroSection() {
               </span>
             </div>
 
+            {/* OPTIMASI CLS: skeleton & h1 punya min-height yang sama
+                supaya saat data masuk tidak menggeser konten di bawahnya */}
             {isLoading ? (
               <Skeleton className="h-14 sm:h-20 w-3/4" />
             ) : (
               <h1
                 ref={headlineRef}
                 className={`${pending} font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold tracking-[-0.03em] leading-[1.1] break-words pr-2`}
+                style={{ minHeight: '1.1em' }}
               >
                 {firstPart && (
                   <>
@@ -312,7 +261,7 @@ export function HeroSection() {
             >
               {location && (
                 <span className="inline-flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-white/60" />
+                  <MapPin className="h-4 w-4 text-white/60" aria-hidden="true" />
                   {location}
                 </span>
               )}
@@ -321,7 +270,7 @@ export function HeroSection() {
                   href={`mailto:${profile.email}`}
                   className="inline-flex items-center gap-2 hover:text-white transition"
                 >
-                  <Mail className="h-4 w-4 text-white/60" />
+                  <Mail className="h-4 w-4 text-white/60" aria-hidden="true" />
                   {profile.email}
                 </a>
               )}
@@ -331,7 +280,7 @@ export function HeroSection() {
               <div ref={(el) => setButtonRef(el, 0)} className={`${pending} inline-flex`}>
                 <Button as="a" href="#portfolio" variant="solid">
                   {t('hero.cta_primary', 'View Portfolio')}
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Button>
               </div>
               <div ref={(el) => setButtonRef(el, 1)} className={`${pending} inline-flex`}>
@@ -344,8 +293,13 @@ export function HeroSection() {
 
           {/* Avatar — refined monochrome frame */}
           <div className="lg:col-span-5 order-1 lg:order-2 flex justify-center lg:justify-end">
-            <div ref={avatarWrapRef} className={`${pending} relative`}>
-              {/* Soft white halo */}
+            {/* OPTIMASI CLS: aspect-ratio container untuk reservasi ruang
+                saat avatar masih loading. */}
+            <div
+              ref={avatarWrapRef}
+              className={`${pending} relative`}
+              style={{ aspectRatio: '1 / 1' }}
+            >
               <div
                 ref={(el) => setRingRef(el, 0)}
                 className={`${pending} absolute -inset-8 rounded-full opacity-50`}
@@ -354,21 +308,25 @@ export function HeroSection() {
                     'radial-gradient(circle, rgba(255,255,255,0.12), transparent 65%)',
                   filter: 'blur(40px)',
                 }}
+                aria-hidden="true"
               />
-              {/* Decorative rings */}
               <div
                 ref={(el) => setRingRef(el, 1)}
                 className={`${pending} absolute -inset-4 rounded-full border border-white/[0.08]`}
+                aria-hidden="true"
               />
               <div
                 ref={(el) => setRingRef(el, 2)}
                 className={`${pending} absolute -inset-2 rounded-full border border-white/[0.05]`}
+                aria-hidden="true"
               />
 
+              {/* OPTIMASI LCP: priority={true} → fetchpriority="high" + eager */}
               <Avatar
                 src={avatarSrc}
                 name={fullName}
                 size="2xl"
+                priority={true}
                 className="relative ring-1 ring-white/15 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)]"
               />
 

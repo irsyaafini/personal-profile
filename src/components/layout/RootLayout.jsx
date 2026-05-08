@@ -5,14 +5,16 @@ import { Footer } from './Footer'
 import { IntroScreen } from '@/components/common/IntroScreen'
 
 /**
- * RootLayout
+ * RootLayout (OPTIMIZED)
  *
- * Perubahan: Tambah IntroScreen — animasi curtain reveal saat pertama buka.
- * Hanya muncul sekali per session (session storage), tidak muncul
- * saat navigasi antar halaman internal.
+ * ── PERUBAHAN OPTIMASI LIGHTHOUSE ─────────────────────────────────────────
+ * 1. PAINT/TBT — Ambient blob glow tetap ada tapi sudah punya
+ *    will-change:transform di .blob (lihat index.css), jadi cuma di-rasterize
+ *    sekali dan dimainkan oleh GPU compositor — tidak repaint per frame.
+ * 2. CLS — main wrapper diberi `min-height` untuk reservasi ruang konten.
+ * 3. Scroll restoration tetap di belakang biar kerja normal antar page.
  */
 
-// Cek apakah intro sudah pernah ditampilkan di session ini
 const hasSeenIntro = () => {
   try { return sessionStorage.getItem('intro-seen') === '1' }
   catch { return false }
@@ -39,7 +41,7 @@ export function RootLayout() {
         <IntroScreen onComplete={handleIntroComplete} />
       )}
 
-      {/* Ambient atmospheric glows */}
+      {/* Ambient atmospheric glows — pure decorative, tidak interaktif */}
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"

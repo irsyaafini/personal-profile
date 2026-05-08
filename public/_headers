@@ -1,0 +1,52 @@
+# =====================================================================
+# Netlify _headers — Cache & Security headers (Lighthouse Best Practices)
+# Letakkan file ini di /public/_headers (atau root jika config khusus).
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Default — semua route
+# ---------------------------------------------------------------------
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+  X-XSS-Protection: 1; mode=block
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+
+# ---------------------------------------------------------------------
+# Static assets — agresif cache (1 tahun) karena sudah di-hash
+# ---------------------------------------------------------------------
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.css
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.woff2
+  Cache-Control: public, max-age=31536000, immutable
+  Access-Control-Allow-Origin: *
+
+/*.svg
+  Cache-Control: public, max-age=31536000, immutable
+
+# ---------------------------------------------------------------------
+# HTML — selalu revalidate agar deploy baru langsung kelihatan
+# ---------------------------------------------------------------------
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+# ---------------------------------------------------------------------
+# Robots & sitemap — cache 1 hari
+# ---------------------------------------------------------------------
+/robots.txt
+  Cache-Control: public, max-age=86400
+
+/sitemap.xml
+  Cache-Control: public, max-age=86400

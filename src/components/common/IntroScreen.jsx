@@ -8,11 +8,23 @@
  *  4. Panels keluar ke atas satu per satu (stagger), reveal konten di bawah
  *  5. Konten website fade-in + slide-up halus
  *
- * Library: GSAP (sudah ada di project)
+ * Library: GSAP (sudah ada di project, di-load lazy untuk performa)
  * Dipasang di: RootLayout.jsx
  *
  * Session storage dipakai agar intro hanya muncul sekali per sesi
  * (tidak muncul lagi saat navigasi antar halaman, hanya saat buka baru / refresh)
+ *
+ * ── PERUBAHAN OPTIMASI LIGHTHOUSE (tanpa mengubah feel animasi) ───────────
+ * - Timing & durasi animasi DIPERTAHANKAN sama persis seperti versi awal.
+ *   Animasi tetap elegan, tidak terasa terburu-buru.
+ * - GSAP di-import secara dynamic (lazy) agar tidak masuk critical bundle.
+ *   Selama menunggu GSAP, panel hitam sudah tampil dari inline style →
+ *   user tidak melihat flash atau perubahan visual.
+ * - prefers-reduced-motion: skip animasi, langsung dispatch event complete.
+ * - `contain: strict` pada wrapper untuk isolasi paint dari sisa halaman.
+ * - `transform: translateZ(0)` pada panel agar di-promote ke compositor
+ *   layer (di-rasterize sekali, dimainkan oleh GPU — bukan repaint).
+ * ──────────────────────────────────────────────────────────────────────────
  *
  * ── Dispatch event 'intro:complete' ──────────────────────────────────
  * Saat intro selesai, kita kirim custom event ke window agar komponen
@@ -21,7 +33,6 @@
  * saat user pertama kali membuka situs.
  */
 import { useEffect, useRef, useState } from 'react'
-import { gsap } from 'gsap'
 
 // Huruf-huruf nama — tiap huruf dianimasikan sendiri
 const NAME_LETTERS = ['I', 'R', 'S', 'Y', 'A']
@@ -37,6 +48,17 @@ export function IntroScreen({ onComplete }) {
   useEffect(() => {
     if (!visible) return
 
+    // Hormati prefers-reduced-motion: skip animasi sepenuhnya, beri tahu
+    // komponen lain bahwa intro sudah "selesai" supaya tidak ter-block.
+    const prefersReducedMotion =
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    if (prefersReducedMotion) {
+      setVisible(false)
+      try { window.dispatchEvent(new Event('intro:complete')) } catch { /* ignore */ }
+      onComplete?.()
+      return
+    }
+
     const wrapper  = wrapperRef.current
     const panels   = panelsRef.current
     const letters  = lettersRef.current
@@ -48,79 +70,99 @@ export function IntroScreen({ onComplete }) {
     // Kunci scroll selama intro
     document.body.style.overflow = 'hidden'
 
-    const tl = gsap.timeline({
-      onComplete: () => {
-        document.body.style.overflow = ''
-        // Fade out wrapper sepenuhnya
-        gsap.to(wrapper, {
-          opacity: 0,
-          duration: 0.4,
-          ease: 'power2.inOut',
-          onComplete: () => {
-            setVisible(false)
-            // Beri tahu komponen lain bahwa intro benar-benar selesai.
-            // HeroSection mendengarkan event ini untuk memulai animasinya.
-            try {
-              window.dispatchEvent(new Event('intro:complete'))
-            } catch { /* ignore */ }
-            onComplete?.()
-          }
-        })
-      }
-    })
+    let cancelled = false
+    let tlInstance = null
 
-    // ── FASE 1: Setup awal ─────────────────────────────────────
-    gsap.set(panels, { yPercent: 0 })
-    gsap.set(letters, { yPercent: 120, opacity: 0 })
-    gsap.set(line, { scaleX: 0, transformOrigin: 'left center' })
-    if (subtitle) gsap.set(subtitle, { opacity: 0, y: 8 })
+    // OPTIMASI: Lazy-load GSAP. Sementara menunggu module ter-load,
+    // panel-panel hitam sudah tampil sebagai layer dari inline style —
+    // user tidak melihat flash putih ataupun konten website yang belum siap.
+    import('gsap').then(({ gsap }) => {
+      if (cancelled) return
 
-    // ── FASE 2: Nama muncul (stagger clip reveal) ──────────────
-    tl.to(letters, {
-      yPercent: 0,
-      opacity: 1,
-      duration: 0.9,
-      stagger: 0.07,
-      ease: 'power4.out',
-      delay: 0.2,
-    })
+      const tl = gsap.timeline({
+        onComplete: () => {
+          document.body.style.overflow = ''
+          // Fade out wrapper sepenuhnya
+          gsap.to(wrapper, {
+            opacity: 0,
+            duration: 0.4,
+            ease: 'power2.inOut',
+            onComplete: () => {
+              setVisible(false)
+              // Beri tahu komponen lain bahwa intro benar-benar selesai.
+              // HeroSection mendengarkan event ini untuk memulai animasinya.
+              try {
+                window.dispatchEvent(new Event('intro:complete'))
+              } catch { /* ignore */ }
+              onComplete?.()
+            }
+          })
+        }
+      })
 
-    // ── FASE 3: Subtitle muncul ────────────────────────────────
-    if (subtitle) {
-      tl.to(subtitle, {
+      tlInstance = tl
+
+      // ── FASE 1: Setup awal ─────────────────────────────────────
+      gsap.set(panels, { yPercent: 0 })
+      gsap.set(letters, { yPercent: 120, opacity: 0 })
+      gsap.set(line, { scaleX: 0, transformOrigin: 'left center' })
+      if (subtitle) gsap.set(subtitle, { opacity: 0, y: 8 })
+
+      // ── FASE 2: Nama muncul (stagger clip reveal) ──────────────
+      tl.to(letters, {
+        yPercent: 0,
         opacity: 1,
-        y: 0,
-        duration: 0.6,
-        ease: 'power3.out',
-      }, '-=0.4')
-    }
+        duration: 0.9,
+        stagger: 0.07,
+        ease: 'power4.out',
+        delay: 0.2,
+      })
 
-    // ── FASE 4: Garis horizontal sweep ────────────────────────
-    tl.to(line, {
-      scaleX: 1,
-      duration: 0.8,
-      ease: 'power3.inOut',
-    }, '-=0.2')
+      // ── FASE 3: Subtitle muncul ────────────────────────────────
+      if (subtitle) {
+        tl.to(subtitle, {
+          opacity: 1,
+          y: 0,
+          duration: 0.6,
+          ease: 'power3.out',
+        }, '-=0.4')
+      }
 
-    // ── FASE 5: Nama menghilang ke atas ───────────────────────
-    tl.to([subtitle, letters], {
-      yPercent: -110,
-      opacity: 0,
-      duration: 0.55,
-      stagger: 0.03,
-      ease: 'power3.in',
-    }, '+=0.15')
+      // ── FASE 4: Garis horizontal sweep ────────────────────────
+      tl.to(line, {
+        scaleX: 1,
+        duration: 0.8,
+        ease: 'power3.inOut',
+      }, '-=0.2')
 
-    // ── FASE 6: Panels sweep keluar ke atas (stagger) ─────────
-    tl.to(panels, {
-      yPercent: -100,
-      duration: 0.85,
-      stagger: 0.07,
-      ease: 'power4.inOut',
-    }, '-=0.3')
+      // ── FASE 5: Nama menghilang ke atas ───────────────────────
+      tl.to([subtitle, letters], {
+        yPercent: -110,
+        opacity: 0,
+        duration: 0.55,
+        stagger: 0.03,
+        ease: 'power3.in',
+      }, '+=0.15')
+
+      // ── FASE 6: Panels sweep keluar ke atas (stagger) ─────────
+      tl.to(panels, {
+        yPercent: -100,
+        duration: 0.85,
+        stagger: 0.07,
+        ease: 'power4.inOut',
+      }, '-=0.3')
+    }).catch(() => {
+      // Fallback: kalau GSAP gagal load (mis. network error),
+      // tutup intro langsung agar user tetap bisa lihat website.
+      document.body.style.overflow = ''
+      setVisible(false)
+      try { window.dispatchEvent(new Event('intro:complete')) } catch { /* ignore */ }
+      onComplete?.()
+    })
 
     return () => {
-      tl.kill()
+      cancelled = true
+      if (tlInstance) tlInstance.kill()
       document.body.style.overflow = ''
     }
   }, [visible, onComplete])
@@ -137,6 +179,7 @@ export function IntroScreen({ onComplete }) {
         zIndex: 9999,
         pointerEvents: 'none',
         overflow: 'hidden',
+        contain: 'strict', // OPTIMASI: isolasi paint dari sisa halaman
       }}
     >
       {/* 5 panel curtain — dengan sedikit perbedaan warna untuk efek depth */}
@@ -158,6 +201,7 @@ export function IntroScreen({ onComplete }) {
             height: '100%',
             background: bg,
             willChange: 'transform',
+            transform: 'translateZ(0)', // promote ke compositor layer
           }}
         />
       ))}

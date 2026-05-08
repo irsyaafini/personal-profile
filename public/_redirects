@@ -1,0 +1,14 @@
+# =====================================================================
+# Netlify _redirects — SPA routing
+# Semua route yang bukan asset di-handle oleh React Router (index.html).
+# =====================================================================
+
+# Asset jangan di-rewrite
+/assets/*  /assets/:splat  200
+
+# Robots & sitemap jangan di-rewrite
+/robots.txt   /robots.txt   200
+/sitemap.xml  /sitemap.xml  200
+
+# SPA fallback — semua route ke index.html
+/*  /index.html  200

@@ -3,84 +3,140 @@
 @tailwind utilities;
 
 /* =============================================================
-   ELEGANT MONOCHROME PORTFOLIO THEME
+   ELEGANT MONOCHROME PORTFOLIO THEME (OPTIMIZED FOR LIGHTHOUSE)
    Pure black & white palette — no chromatic accents.
    ============================================================= */
 
 @layer base {
   :root {
     /* Surfaces — graphite ladder */
-    --c-bg:        #0a0a0a;   /* page background, deepest */
-    --c-surface:   #111111;   /* hero/section overlay */
-    --c-card:      #161616;   /* card background */
-    --c-elevated:  #1c1c1c;   /* hover/elevated state */
+    --c-bg: #0a0a0a;
+    --c-surface: #111111;
+    --c-card: #161616;
+    --c-elevated: #1c1c1c;
 
     /* Hairlines */
-    --c-border:        rgba(255, 255, 255, 0.08);
+    --c-border: rgba(255, 255, 255, 0.08);
     --c-border-strong: rgba(255, 255, 255, 0.16);
 
     /* Text */
-    --c-text:         #f5f5f5;
-    --c-text-muted:   #a3a3a3;
-    --c-text-subtle:  #6b6b6b;
-    --c-text-faint:   #404040;
+    --c-text: #f5f5f5;
+    --c-text-muted: #a3a3a3;
+    --c-text-subtle: #6b6b6b;
+    --c-text-faint: #404040;
 
     /* Single accent — bright porcelain white for contrast */
-    --c-accent:       #ffffff;
-    --c-accent-soft:  rgba(255, 255, 255, 0.85);
+    --c-accent: #ffffff;
+    --c-accent-soft: rgba(255, 255, 255, 0.85);
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 
   html {
     scroll-behavior: smooth;
     background-color: var(--c-bg);
     -webkit-text-size-adjust: 100%;
+    /* OPTIMASI: cegah scrollbar geser layout (CLS) */
+    scrollbar-gutter: stable;
   }
 
   body {
     background: var(--c-bg);
     color: var(--c-text);
     @apply font-sans antialiased;
-    font-feature-settings: 'kern' 1, 'liga' 1, 'ss01' 1;
+    font-feature-settings:
+      "kern" 1,
+      "liga" 1,
+      "ss01" 1;
     overflow-x: hidden;
     min-height: 100vh;
     min-height: 100dvh;
-    /* Subtle vignette for depth */
+    /* OPTIMASI CLS: kunci 1 frame extra rendering — hindari font swap shift
+       pakai size-adjust di @font-face (perlu ditambahkan di import font). */
     background-image:
-      radial-gradient(ellipse at top, rgba(255,255,255,0.025), transparent 55%),
-      radial-gradient(ellipse at bottom, rgba(255,255,255,0.015), transparent 60%);
+      radial-gradient(
+        ellipse at top,
+        rgba(255, 255, 255, 0.025),
+        transparent 55%
+      ),
+      radial-gradient(
+        ellipse at bottom,
+        rgba(255, 255, 255, 0.015),
+        transparent 60%
+      );
+    /* OPTIMASI: text-rendering optimasi tanpa cost performance besar */
+    text-rendering: optimizeSpeed;
   }
 
-  img, video, canvas, svg { max-width: 100%; height: auto; }
+  /* OPTIMASI CLS: img tanpa width/height tetap punya aspect-ratio dari attribute.
+     Tambahkan ini agar default behavior aman. */
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
+  img[width][height] {
+    height: auto; /* responsive — tapi browser tetap pakai ratio dari atribut */
+  }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     @apply font-display;
     letter-spacing: -0.02em;
+    /* OPTIMASI CLS: text-wrap balance modern, hindari last-line orphan
+       yang bisa menggeser tinggi heading saat font swap */
+    text-wrap: balance;
   }
 
-  ::selection { background: rgba(255,255,255,0.18); color: #fff; }
+  ::selection {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+  }
 
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: var(--c-bg); }
-  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 99px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--c-bg);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
 }
 
 @layer components {
-  /* ----- Layout ----- */
-  .container-xl  { @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-10; }
-  .container-lg  { @apply max-w-6xl mx-auto px-4 sm:px-6 lg:px-10; }
-  /* SPACING FIX: Dikurangi dari py-20→py-14, lg:py-36→lg:py-24
-     agar antar-section tidak terlalu renggang */
-  .section-gap   { @apply py-14 sm:py-16 md:py-20 lg:py-24; }
+  .container-xl {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-10;
+  }
+  .container-lg {
+    @apply max-w-6xl mx-auto px-4 sm:px-6 lg:px-10;
+  }
+  .section-gap {
+    @apply py-14 sm:py-16 md:py-20 lg:py-24;
+  }
 
   /* ----- Card ----- */
   .card {
     background: var(--c-card);
     border: 1px solid var(--c-border);
     @apply rounded-2xl;
-    transition: border-color 0.35s ease, background 0.35s ease, transform 0.35s ease;
+    transition:
+      border-color 0.35s ease,
+      background 0.35s ease,
+      transform 0.35s ease;
   }
   .card:hover {
     border-color: var(--c-border-strong);
@@ -99,7 +155,7 @@
     background: #e5e5e5;
     border-color: #e5e5e5;
     transform: translateY(-1px);
-    box-shadow: 0 12px 28px -8px rgba(255,255,255,0.18);
+    box-shadow: 0 12px 28px -8px rgba(255, 255, 255, 0.18);
   }
 
   .btn-outline {
@@ -110,8 +166,8 @@
     transition: all 0.25s ease;
   }
   .btn-outline:hover {
-    background: rgba(255,255,255,0.06);
-    border-color: rgba(255,255,255,0.4);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.4);
   }
 
   .btn-ghost {
@@ -122,24 +178,29 @@
   }
   .btn-ghost:hover {
     color: var(--c-text);
-    background: rgba(255,255,255,0.04);
+    background: rgba(255, 255, 255, 0.04);
   }
 
   /* ----- Form fields ----- */
   .field {
     @apply w-full px-4 py-3.5 rounded-xl text-sm;
     color: var(--c-text);
-    background: rgba(255,255,255,0.02);
+    background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--c-border);
     outline: none;
-    transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+    transition:
+      border-color 0.25s,
+      background 0.25s,
+      box-shadow 0.25s;
     font-family: inherit;
   }
-  .field::placeholder { color: var(--c-text-subtle); }
+  .field::placeholder {
+    color: var(--c-text-subtle);
+  }
   .field:focus {
-    border-color: rgba(255,255,255,0.3);
-    background: rgba(255,255,255,0.04);
-    box-shadow: 0 0 0 3px rgba(255,255,255,0.05);
+    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.04);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
   }
   .field-error {
     border-color: rgba(244, 63, 94, 0.5) !important;
@@ -154,7 +215,7 @@
   /* ----- Badges (monochrome) ----- */
   .badge-light {
     @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium tracking-wide uppercase;
-    background: rgba(255,255,255,0.06);
+    background: rgba(255, 255, 255, 0.06);
     border: 1px solid var(--c-border-strong);
     color: var(--c-text);
   }
@@ -166,7 +227,7 @@
   }
   .badge-dark {
     @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium tracking-wide uppercase;
-    background: rgba(0,0,0,0.4);
+    background: rgba(0, 0, 0, 0.4);
     border: 1px solid var(--c-border);
     color: var(--c-text-muted);
   }
@@ -177,7 +238,7 @@
     color: var(--c-text-muted);
   }
   .section-label::before {
-    content: '';
+    content: "";
     width: 24px;
     height: 1px;
     background: var(--c-text-muted);
@@ -187,19 +248,26 @@
   /* ----- Divider ----- */
   .line-accent {
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.25),
+      transparent
+    );
   }
 
-  /* ----- Glow blob (very subtle, white only) ----- */
+  /* ----- Glow blob (very subtle, white only) -----
+     OPTIMASI: blur diturunkan dari 70px → 50px untuk mengurangi cost paint.
+     Tetap di-promote ke compositor layer dengan transform translateZ(0). */
   .blob {
     position: absolute;
     border-radius: 50%;
-    filter: blur(70px);
+    filter: blur(50px);
     pointer-events: none;
-    /* Promote to its own GPU layer so blur is rasterized once,
-       not re-computed on every scroll frame. */
     will-change: transform;
     transform: translateZ(0);
+    /* OPTIMASI: contain paint dari blob agar tidak invalidate area lain */
+    contain: layout paint style;
   }
 }
 
@@ -219,7 +287,11 @@ body.dg-scroll-lock {
     background-clip: text;
   }
   .text-gradient-fade {
-    background: linear-gradient(180deg, #ffffff 0%, rgba(255,255,255,0.55) 100%);
+    background: linear-gradient(
+      180deg,
+      #ffffff 0%,
+      rgba(255, 255, 255, 0.55) 100%
+    );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -231,19 +303,37 @@ body.dg-scroll-lock {
   }
 
   /* Hairline borders */
-  .border-dim    { border-color: var(--c-border); }
-  .border-strong { border-color: var(--c-border-strong); }
+  .border-dim {
+    border-color: var(--c-border);
+  }
+  .border-strong {
+    border-color: var(--c-border-strong);
+  }
 
-  .no-scrollbar::-webkit-scrollbar { display: none; }
-  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* OPTIMASI: content-visibility untuk section below-the-fold.
+     Browser akan skip rendering section yang berada jauh dari viewport
+     sampai user scroll mendekat. Sangat membantu TBT/Speed Index pada
+     halaman panjang.
+
+     Pakai dengan: <section className="section-gap cv-auto">
+     `contain-intrinsic-size` memberi tinggi placeholder agar scrollbar
+     tetap stabil dan tidak ada CLS saat section di-skip rendernya. */
+  .cv-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 720px;
+  }
 }
 
 /* =============================================================
    HERO ANIMATION — initial hidden state
-   Class diberikan oleh HeroSection.jsx pada elemen yang menunggu
-   di-animasikan. Setelah animasi mulai, class dilepas dan GSAP
-   mengontrol opacity. Setelah animasi selesai, GSAP menulis inline
-   opacity:1 sehingga elemen tetap tampil.
    ============================================================= */
 .hero-anim-pending {
   opacity: 0;
@@ -251,41 +341,38 @@ body.dg-scroll-lock {
 
 /* =============================================================
    SCROLL REVEAL ANIMATIONS — subtle & elegant
-   Dipakai oleh <Reveal> di src/components/common/Reveal.jsx.
-   Semua animasi pakai cubic-bezier(0.22, 1, 0.36, 1) — kurva
-   "expo-out" yang halus, terasa premium dan tidak mekanis.
-   Mode REPLAY: kelas .reveal-init dipasang lagi saat keluar
-   viewport, jadi animasi bisa berulang.
    ============================================================= */
 .reveal {
-  /* Default transition — bisa di-override via inline style */
   transition-property: opacity, transform, filter;
   transition-duration: 700ms;
   transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  /* Hint untuk browser — promote ke compositor layer hanya
-     saat reveal aktif (lihat .reveal-init / .reveal-in). */
-  will-change: opacity, transform;
+  /* OPTIMASI: jangan set will-change global — terlalu agresif.
+     Browser akan otomatis menanganinya untuk transition. */
 }
 
-/* State akhir (terlihat): tidak ada translate, fully opaque */
 .reveal.reveal-in {
   opacity: 1;
   transform: none;
   filter: none;
 }
 
-/* State awal — kombinasi dengan arah translate */
 .reveal.reveal-init {
   opacity: 0;
 }
 
-/* Varian arah — translate kecil agar terasa subtle, bukan jauh */
-.reveal.reveal-init.reveal-up    { transform: translate3d(0, 24px, 0); }
-.reveal.reveal-init.reveal-down  { transform: translate3d(0, -24px, 0); }
-.reveal.reveal-init.reveal-left  { transform: translate3d(24px, 0, 0); }
-.reveal.reveal-init.reveal-right { transform: translate3d(-24px, 0, 0); }
+.reveal.reveal-init.reveal-up {
+  transform: translate3d(0, 24px, 0);
+}
+.reveal.reveal-init.reveal-down {
+  transform: translate3d(0, -24px, 0);
+}
+.reveal.reveal-init.reveal-left {
+  transform: translate3d(24px, 0, 0);
+}
+.reveal.reveal-init.reveal-right {
+  transform: translate3d(-24px, 0, 0);
+}
 
-/* Reduced motion: matikan semua reveal — langsung tampil */
 @media (prefers-reduced-motion: reduce) {
   .reveal,
   .reveal.reveal-init,
@@ -294,5 +381,10 @@ body.dg-scroll-lock {
     transform: none !important;
     filter: none !important;
     transition: none !important;
+  }
+
+  /* OPTIMASI: matikan scroll smooth saat reduced-motion */
+  html {
+    scroll-behavior: auto !important;
   }
 }

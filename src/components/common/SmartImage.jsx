@@ -2,17 +2,24 @@ import { useState, useRef, useEffect, memo } from 'react'
 import { cn } from '@/utils'
 
 /**
- * SmartImage — gambar yang fade-in setelah dimuat, dengan dukungan:
+ * SmartImage — gambar yang fade-in setelah dimuat (OPTIMIZED).
  *
  * OPTIMASI yang diterapkan:
  * 1. loading="lazy" default — browser-native lazy load untuk gambar below-the-fold
  * 2. decoding="async" — decode gambar off main thread
- * 3. fetchpriority prop — beri prioritas tinggi untuk gambar above-the-fold (hero avatar)
- * 4. Fallback error state yang rapi
- * 5. memo() — cegah re-render saat parent render ulang dengan props sama
+ * 3. fetchpriority prop — beri prioritas tinggi untuk gambar above-the-fold
+ * 4. width + height — WAJIB untuk mencegah CLS. Browser akan reservasi ruang
+ *    sebelum gambar dimuat. Kalau tidak ada, container pakai aspectRatio.
+ * 5. Fallback error state yang rapi
+ * 6. memo() — cegah re-render saat parent render ulang dengan props sama
  *
- * Untuk gambar hero/above-the-fold, gunakan:
- *   <SmartImage loading="eager" fetchPriority="high" />
+ * Untuk gambar hero/above-the-fold:
+ *   <SmartImage loading="eager" fetchPriority="high" width={400} height={400} />
+ *
+ * Untuk gambar lain (default lazy):
+ *   <SmartImage src="..." width={300} height={200} />
+ *   atau pakai aspectRatio:
+ *   <SmartImage src="..." containerClassName="aspect-video" />
  */
 const SmartImage = memo(function SmartImage({
   src,
@@ -21,16 +28,17 @@ const SmartImage = memo(function SmartImage({
   containerClassName = '',
   loading = 'lazy',
   decoding = 'async',
-  fetchPriority,        // 'high' | 'low' | 'auto' — untuk hero images pakai 'high'
-  sizes,                // srcset sizes string, mis: "(max-width: 640px) 100vw, 50vw"
+  fetchPriority,
+  sizes,
+  width,                 // ← NEW: pass-through ke <img> untuk reservasi ruang
+  height,                // ← NEW: pass-through ke <img> untuk reservasi ruang
+  aspectRatio,           // ← NEW: kalau width/height tidak diberi, pakai aspect-ratio
   ...rest
 }) {
   const [loaded, setLoaded]   = useState(false)
   const [errored, setErrored] = useState(false)
   const imgRef = useRef(null)
 
-  // OPTIMASI: Tangani kasus gambar sudah ada di browser cache —
-  // event onLoad tidak selalu trigger untuk cached images.
   useEffect(() => {
     const img = imgRef.current
     if (img && img.complete && img.naturalWidth > 0) {
@@ -41,6 +49,12 @@ const SmartImage = memo(function SmartImage({
   const handleLoad = () => setLoaded(true)
   const handleError = () => setErrored(true)
 
+  // OPTIMASI CLS: container punya aspect-ratio agar ruang ter-reservasi
+  // bahkan sebelum gambar selesai diload.
+  const containerStyle = aspectRatio
+    ? { aspectRatio }
+    : (width && height ? { aspectRatio: `${width} / ${height}` } : undefined)
+
   return (
     <div
       className={cn(
@@ -48,15 +62,18 @@ const SmartImage = memo(function SmartImage({
         'bg-gradient-to-br from-white/[0.04] to-white/[0.01]',
         containerClassName
       )}
+      style={containerStyle}
     >
       {!errored && src && (
         <img
           ref={imgRef}
           src={src}
           alt={alt}
+          width={width}
+          height={height}
           loading={loading}
           decoding={decoding}
-          fetchPriority={fetchPriority}
+          fetchpriority={fetchPriority}
           sizes={sizes}
           onLoad={handleLoad}
           onError={handleError}
