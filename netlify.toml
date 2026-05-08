@@ -1,8 +1,105 @@
+# =====================================================================
+# netlify.toml — Konfigurasi Netlify untuk irsyaafini.netlify.app
+# Letakkan file ini di ROOT project (sejajar dengan package.json).
+# =====================================================================
+
 [build]
   command = "npm run build"
   publish = "dist"
+
+# =====================================================================
+# Secret scanning — whitelist VITE_SUPABASE_URL
+# VITE_SUPABASE_URL muncul di build output (index.html via preconnect)
+# karena memang DESIGN-nya begitu — URL Supabase bersifat PUBLIK,
+# bukan rahasia. Yang RAHASIA adalah service_role key, BUKAN URL/anon key.
+#
+# Reference: https://docs.netlify.com/configure-builds/environment-variables/#prevent-exposure-of-sensitive-variables
+# =====================================================================
+[build.environment]
+  # Beri tahu Netlify untuk SKIP scan key-key ini sebagai secret
+  SECRETS_SCAN_OMIT_KEYS = "VITE_SUPABASE_URL,VITE_SUPABASE_ANON_KEY"
+
+# =====================================================================
+# SPA redirects — semua route ke index.html
+# =====================================================================
+[[redirects]]
+  from = "/assets/*"
+  to = "/assets/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/robots.txt"
+  to = "/robots.txt"
+  status = 200
+
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/sitemap.xml"
+  status = 200
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+# =====================================================================
+# Security headers
+# =====================================================================
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+    X-XSS-Protection = "1; mode=block"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+
+# =====================================================================
+# Cache headers — agresif untuk asset hashed, revalidate untuk HTML
+# =====================================================================
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.woff2"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+    Access-Control-Allow-Origin = "*"
+
+[[headers]]
+  for = "/*.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/robots.txt"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/sitemap.xml"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
