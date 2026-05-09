@@ -1,26 +1,5 @@
 /**
- * HeroSection — Sequential Stagger Reveal Animation (OPTIMIZED FOR LIGHTHOUSE)
- *
- * ── PERUBAHAN OPTIMASI LIGHTHOUSE ─────────────────────────────────────────
- * 1. LCP — Avatar hero dimuat dengan priority={true} → eager + fetchpriority="high"
- * 2. CLS — Tinggi minimum reservasi pada section hero agar tidak ada
- *    layout shift saat data profile loading. Heading + bio diberi
- *    `min-height` reservasi sehingga ruang sudah ada sebelum data masuk.
- * 3. CLS — Container avatar pakai aspect-ratio fixed (sudah di Avatar.jsx).
- * 4. CLS — Class .hero-anim-pending hanya men-set opacity (tidak transform),
- *    sehingga TIDAK menggeser layout. Animasi GSAP pakai transform yang juga
- *    tidak menggeser layout (compositor-only).
- * 5. TBT — Animasi diaktifkan via requestIdleCallback (kalau tersedia)
- *    setelah intro selesai, agar tidak block main thread saat awal.
- * ──────────────────────────────────────────────────────────────────────────
- *
- * Konsep animasi tetap sama:
- *   1. AVATAR turun dari atas (y: -60) dengan scale 0.6 → 1, ease back.out
- *   2. RINGS + HALO + LABEL fade in mengikuti avatar (sedikit ter-offset).
- *   3. ELEMEN TEKS muncul satu per satu dari bawah (y: 30 → 0, opacity 0 → 1)
- *      dengan stagger 0.08s, ease power3.out:
- *        eyebrow → headline → subheadline → bio → meta info
- *   4. BUTTONS slide up terakhir (y: 24 → 0) dengan stagger lebih ketat 0.1s.
+ * HeroSection — dengan GlassSurface pada label/badge elements
  */
 import { useEffect, useRef, useState } from 'react'
 import { ArrowRight, Mail, MapPin } from 'lucide-react'
@@ -31,8 +10,8 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { useProfile } from '@/features/profile/useProfile'
 import { useTranslation } from '@/features/i18n/useTranslation'
 import { resolveImage } from '@/lib/storage'
+import GlassSurface from '@/components/reactbits/GlassSurface'
 
-// Cek apakah intro sudah pernah ditampilkan di session ini.
 const introAlreadySeen = () => {
   try { return sessionStorage.getItem('intro-seen') === '1' }
   catch { return true }
@@ -73,11 +52,6 @@ export function HeroSection() {
     if (introDone) return
     const onIntroComplete = () => setIntroDone(true)
     window.addEventListener('intro:complete', onIntroComplete)
-    // Safety net: kalau karena suatu hal event 'intro:complete' tidak datang
-    // (mis. IntroScreen ter-unmount lebih dulu, atau GSAP gagal load),
-    // tunggu max 6 detik lalu jalankan animasi tetap. Mencegah hero
-    // "terjebak" tidak muncul. Disesuaikan dengan durasi total IntroScreen
-    // (~3-3.5 detik) plus buffer aman.
     const safetyTimeout = setTimeout(() => setIntroDone(true), 6000)
     return () => {
       window.removeEventListener('intro:complete', onIntroComplete)
@@ -88,9 +62,7 @@ export function HeroSection() {
   useEffect(() => {
     if (isLoading || !introDone || hasPlayed) return
 
-    const prefersReducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
-    ).matches
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     const avatarWrap = avatarWrapRef.current
     const eyebrow    = eyebrowRef.current
@@ -120,9 +92,6 @@ export function HeroSection() {
       return
     }
 
-    // OPTIMASI TBT: Lazy-load GSAP hanya saat perlu animasi.
-    // GSAP ~70KB tidak perlu di critical path — animasi hero baru jalan
-    // setelah intro selesai (atau langsung kalau intro sudah pernah dilihat).
     let cancelled = false
     let killFn = () => {}
 
@@ -182,7 +151,6 @@ export function HeroSection() {
 
       killFn = () => ctx.kill()
     }).catch(() => {
-      // Fallback: kalau GSAP gagal load, tampilkan langsung tanpa animasi.
       showAll()
       allEls.forEach(el => { el.style.opacity = '1' })
       setHasPlayed(true)
@@ -203,25 +171,38 @@ export function HeroSection() {
       className="relative overflow-x-clip pt-24 sm:pt-24 md:pt-28 lg:pt-10 pb-12 sm:pb-16"
     >
       <Container>
-        {/* OPTIMASI CLS: min-height pada grid agar tidak collapse saat data load */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center min-h-[420px] sm:min-h-[480px] lg:min-h-[520px]">
           {/* Text */}
           <div className="lg:col-span-7 order-2 lg:order-1 min-w-0">
+            {/* Eyebrow badge — GlassSurface wrapper */}
             <div
               ref={eyebrowRef}
-              className={`${pending} inline-flex items-center gap-2.5 mb-5 px-3.5 py-1.5 rounded-full bg-white/[0.03] border border-white/10`}
+              className={`${pending} mb-5 inline-block`}
             >
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-white opacity-50 animate-ping" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
-              </span>
-              <span className="text-[11px] font-medium tracking-[0.22em] uppercase text-white/70">
-                {t('hero.greeting', 'Available for collaboration')}
-              </span>
+              <GlassSurface
+                width="auto"
+                height={36}
+                borderRadius={9999}
+                brightness={50}
+                opacity={0.92}
+                blur={10}
+                backgroundOpacity={0.03}
+                distortionScale={-100}
+                redOffset={0}
+                greenOffset={6}
+                blueOffset={12}
+                style={{ display: 'inline-flex', alignItems: 'center', padding: '0 14px', gap: 8, minWidth: 0 }}
+              >
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-white opacity-50 animate-ping" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
+                </span>
+                <span className="text-[11px] font-medium tracking-[0.22em] uppercase text-white/70">
+                  {t('hero.greeting', 'Available for collaboration')}
+                </span>
+              </GlassSurface>
             </div>
 
-            {/* OPTIMASI CLS: skeleton & h1 punya min-height yang sama
-                supaya saat data masuk tidak menggeser konten di bawahnya */}
             {isLoading ? (
               <Skeleton className="h-14 sm:h-20 w-3/4" />
             ) : (
@@ -291,10 +272,8 @@ export function HeroSection() {
             </div>
           </div>
 
-          {/* Avatar — refined monochrome frame */}
+          {/* Avatar */}
           <div className="lg:col-span-5 order-1 lg:order-2 flex justify-center lg:justify-end">
-            {/* OPTIMASI CLS: aspect-ratio container untuk reservasi ruang
-                saat avatar masih loading. */}
             <div
               ref={avatarWrapRef}
               className={`${pending} relative`}
@@ -304,8 +283,7 @@ export function HeroSection() {
                 ref={(el) => setRingRef(el, 0)}
                 className={`${pending} absolute -inset-8 rounded-full opacity-50`}
                 style={{
-                  background:
-                    'radial-gradient(circle, rgba(255,255,255,0.12), transparent 65%)',
+                  background: 'radial-gradient(circle, rgba(255,255,255,0.12), transparent 65%)',
                   filter: 'blur(40px)',
                 }}
                 aria-hidden="true"
@@ -321,7 +299,6 @@ export function HeroSection() {
                 aria-hidden="true"
               />
 
-              {/* OPTIMASI LCP: priority={true} → fetchpriority="high" + eager */}
               <Avatar
                 src={avatarSrc}
                 name={fullName}
@@ -333,11 +310,23 @@ export function HeroSection() {
               {profile?.headline && (
                 <div
                   ref={(el) => setRingRef(el, 3)}
-                  className={`${pending} absolute -bottom-3 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-black/85 border border-white/15 backdrop-blur whitespace-nowrap shadow-2xl`}
+                  className={`${pending} absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap`}
                 >
-                  <span className="text-[11px] font-medium tracking-[0.18em] uppercase text-white/85">
-                    {profile.headline.split(' ').slice(0, 3).join(' ')}
-                  </span>
+                  <GlassSurface
+                    width="auto"
+                    height={36}
+                    borderRadius={9999}
+                    brightness={48}
+                    opacity={0.92}
+                    blur={12}
+                    backgroundOpacity={0.02}
+                    distortionScale={-110}
+                    style={{ display: 'inline-flex', alignItems: 'center', padding: '0 16px', minWidth: 0 }}
+                  >
+                    <span className="text-[11px] font-medium tracking-[0.18em] uppercase text-white/85">
+                      {profile.headline.split(' ').slice(0, 3).join(' ')}
+                    </span>
+                  </GlassSurface>
                 </div>
               )}
             </div>

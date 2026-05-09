@@ -14,7 +14,6 @@ import { useTranslation } from '@/features/i18n/useTranslation'
 import { resolveImage } from '@/lib/storage'
 import { formatDate } from '@/utils'
 
-// OPTIMASI: Pisahkan ResearchCard sebagai memo component.
 const ResearchCard = memo(function ResearchCard({ item, t }) {
   const cover = resolveImage(item.cover_path)
 
@@ -27,7 +26,7 @@ const ResearchCard = memo(function ResearchCard({ item, t }) {
           containerClassName="aspect-[16/10] w-full"
           className="group-hover:scale-105 transition-transform duration-700"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" aria-hidden />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" aria-hidden />
       </Link>
 
       <div className="p-6 sm:p-7 flex-1 flex flex-col">
@@ -58,7 +57,7 @@ const ResearchCard = memo(function ResearchCard({ item, t }) {
         <div className="mt-auto pt-5 flex items-center justify-end">
           <Link
             to={`/research/${item.id}`}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-white/70 hover:text-white transition"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-white/60 hover:text-white transition"
             aria-label={`View ${item.title}`}
           >
             {t('portfolio.view', 'View')}
@@ -108,7 +107,7 @@ export function PortfolioSection() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {SKELETON_ITEMS.map((_, i) => (
                 <Card key={i} aria-hidden>
-                  <Skeleton className="aspect-[16/10] rounded-none rounded-t-2xl" />
+                  <Skeleton className="aspect-[16/10]" />
                   <div className="p-6 space-y-3">
                     <Skeleton className="h-4 w-1/3" />
                     <Skeleton className="h-5 w-3/4" />

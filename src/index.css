@@ -3,17 +3,17 @@
 @tailwind utilities;
 
 /* =============================================================
-   ELEGANT MONOCHROME PORTFOLIO THEME (OPTIMIZED FOR LIGHTHOUSE)
-   Pure black & white palette — no chromatic accents.
+   ELEGANT MONOCHROME PORTFOLIO THEME — GLASS SURFACE EDITION
+   Pure black & white palette with liquid glass surfaces.
    ============================================================= */
 
 @layer base {
   :root {
     /* Surfaces — graphite ladder */
-    --c-bg: #0a0a0a;
-    --c-surface: #111111;
-    --c-card: #161616;
-    --c-elevated: #1c1c1c;
+    --c-bg: #080808;
+    --c-surface: #0f0f0f;
+    --c-card: rgba(255, 255, 255, 0.03);
+    --c-elevated: rgba(255, 255, 255, 0.06);
 
     /* Hairlines */
     --c-border: rgba(255, 255, 255, 0.08);
@@ -25,7 +25,7 @@
     --c-text-subtle: #6b6b6b;
     --c-text-faint: #404040;
 
-    /* Single accent — bright porcelain white for contrast */
+    /* Single accent */
     --c-accent: #ffffff;
     --c-accent-soft: rgba(255, 255, 255, 0.85);
   }
@@ -40,7 +40,6 @@
     scroll-behavior: smooth;
     background-color: var(--c-bg);
     -webkit-text-size-adjust: 100%;
-    /* OPTIMASI: cegah scrollbar geser layout (CLS) */
     scrollbar-gutter: stable;
   }
 
@@ -55,25 +54,26 @@
     overflow-x: hidden;
     min-height: 100vh;
     min-height: 100dvh;
-    /* OPTIMASI CLS: kunci 1 frame extra rendering — hindari font swap shift
-       pakai size-adjust di @font-face (perlu ditambahkan di import font). */
+    /* Multi-layer atmospheric gradient background */
     background-image:
       radial-gradient(
-        ellipse at top,
-        rgba(255, 255, 255, 0.025),
-        transparent 55%
+        ellipse 80% 50% at 50% -20%,
+        rgba(255, 255, 255, 0.05),
+        transparent 60%
       ),
       radial-gradient(
-        ellipse at bottom,
-        rgba(255, 255, 255, 0.015),
-        transparent 60%
+        ellipse at top right,
+        rgba(255, 255, 255, 0.03),
+        transparent 50%
+      ),
+      radial-gradient(
+        ellipse at bottom left,
+        rgba(255, 255, 255, 0.02),
+        transparent 55%
       );
-    /* OPTIMASI: text-rendering optimasi tanpa cost performance besar */
     text-rendering: optimizeSpeed;
   }
 
-  /* OPTIMASI CLS: img tanpa width/height tetap punya aspect-ratio dari attribute.
-     Tambahkan ini agar default behavior aman. */
   img,
   video,
   canvas,
@@ -82,7 +82,7 @@
     height: auto;
   }
   img[width][height] {
-    height: auto; /* responsive — tapi browser tetap pakai ratio dari atribut */
+    height: auto;
   }
 
   h1,
@@ -91,8 +91,6 @@
   h4 {
     @apply font-display;
     letter-spacing: -0.02em;
-    /* OPTIMASI CLS: text-wrap balance modern, hindari last-line orphan
-       yang bisa menggeser tinggi heading saat font swap */
     text-wrap: balance;
   }
 
@@ -109,11 +107,11 @@
     background: var(--c-bg);
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.10);
     border-radius: 99px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.22);
   }
 }
 
@@ -128,19 +126,29 @@
     @apply py-14 sm:py-16 md:py-20 lg:py-24;
   }
 
-  /* ----- Card ----- */
+  /* ----- Card glass surface ----- */
+  /* Legacy .card dipertahankan untuk komponen yang tidak pakai Card component */
   .card {
-    background: var(--c-card);
-    border: 1px solid var(--c-border);
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px) saturate(1.4);
+    -webkit-backdrop-filter: blur(12px) saturate(1.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     @apply rounded-2xl;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+      0 4px 24px rgba(0, 0, 0, 0.25),
+      0 1px 0 rgba(255, 255, 255, 0.08) inset;
     transition:
       border-color 0.35s ease,
-      background 0.35s ease,
+      box-shadow 0.35s ease,
       transform 0.35s ease;
   }
   .card:hover {
-    border-color: var(--c-border-strong);
-    background: var(--c-elevated);
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      0 1px 0 rgba(255, 255, 255, 0.12) inset;
   }
 
   /* ----- Buttons ----- */
@@ -148,26 +156,31 @@
     @apply inline-flex items-center gap-2 px-6 py-3 rounded-full font-medium text-sm tracking-wide;
     background: #ffffff;
     color: #0a0a0a;
-    border: 1px solid #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.9);
     transition: all 0.25s ease;
+    box-shadow: 0 2px 12px rgba(255, 255, 255, 0.12);
   }
   .btn-solid:hover {
-    background: #e5e5e5;
-    border-color: #e5e5e5;
+    background: #e8e8e8;
+    border-color: #e8e8e8;
     transform: translateY(-1px);
-    box-shadow: 0 12px 28px -8px rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 28px -4px rgba(255, 255, 255, 0.22);
   }
 
   .btn-outline {
     @apply inline-flex items-center gap-2 px-6 py-3 rounded-full font-medium text-sm tracking-wide;
-    background: transparent;
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     color: var(--c-text);
-    border: 1px solid var(--c-border-strong);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     transition: all 0.25s ease;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset;
   }
   .btn-outline:hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.28);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.14) inset, 0 4px 16px rgba(0,0,0,0.2);
   }
 
   .btn-ghost {
@@ -178,29 +191,35 @@
   }
   .btn-ghost:hover {
     color: var(--c-text);
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.08);
   }
 
   /* ----- Form fields ----- */
   .field {
     @apply w-full px-4 py-3.5 rounded-xl text-sm;
     color: var(--c-text);
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--c-border);
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     outline: none;
     transition:
       border-color 0.25s,
       background 0.25s,
       box-shadow 0.25s;
     font-family: inherit;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset;
   }
   .field::placeholder {
     color: var(--c-text-subtle);
   }
   .field:focus {
-    border-color: rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.04);
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 255, 0.04),
+      0 1px 0 rgba(255, 255, 255, 0.08) inset;
   }
   .field-error {
     border-color: rgba(244, 63, 94, 0.5) !important;
@@ -212,23 +231,28 @@
     color: var(--c-text-subtle);
   }
 
-  /* ----- Badges (monochrome) ----- */
+  /* ----- Badges ----- */
   .badge-light {
     @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium tracking-wide uppercase;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid var(--c-border-strong);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     color: var(--c-text);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1) inset;
   }
   .badge-outline {
     @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium tracking-wide uppercase;
-    background: transparent;
-    border: 1px solid var(--c-border);
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: var(--c-text-muted);
   }
   .badge-dark {
     @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-medium tracking-wide uppercase;
     background: rgba(0, 0, 0, 0.4);
-    border: 1px solid var(--c-border);
+    border: 1px solid rgba(255, 255, 255, 0.07);
     color: var(--c-text-muted);
   }
 
@@ -251,23 +275,31 @@
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(255, 255, 255, 0.25),
+      rgba(255, 255, 255, 0.20),
       transparent
     );
   }
 
-  /* ----- Glow blob (very subtle, white only) -----
-     OPTIMASI: blur diturunkan dari 70px → 50px untuk mengurangi cost paint.
-     Tetap di-promote ke compositor layer dengan transform translateZ(0). */
+  /* ----- Glow blob ----- */
   .blob {
     position: absolute;
     border-radius: 50%;
-    filter: blur(50px);
+    filter: blur(60px);
     pointer-events: none;
     will-change: transform;
     transform: translateZ(0);
-    /* OPTIMASI: contain paint dari blob agar tidak invalidate area lain */
     contain: layout paint style;
+  }
+
+  /* ----- Glass panel helper (untuk admin non-Card) ----- */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(16px) saturate(1.5);
+    -webkit-backdrop-filter: blur(16px) saturate(1.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.08) inset,
+      0 8px 32px rgba(0, 0, 0, 0.3);
   }
 }
 
@@ -279,7 +311,7 @@ body.dg-scroll-lock {
 }
 
 @layer utilities {
-  /* Elegant text gradient — silver to white */
+  /* Elegant text gradient */
   .text-gradient-silver {
     background: linear-gradient(135deg, #ffffff 0%, #a3a3a3 100%);
     -webkit-background-clip: text;
@@ -302,7 +334,6 @@ body.dg-scroll-lock {
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");
   }
 
-  /* Hairline borders */
   .border-dim {
     border-color: var(--c-border);
   }
@@ -318,14 +349,6 @@ body.dg-scroll-lock {
     scrollbar-width: none;
   }
 
-  /* OPTIMASI: content-visibility untuk section below-the-fold.
-     Browser akan skip rendering section yang berada jauh dari viewport
-     sampai user scroll mendekat. Sangat membantu TBT/Speed Index pada
-     halaman panjang.
-
-     Pakai dengan: <section className="section-gap cv-auto">
-     `contain-intrinsic-size` memberi tinggi placeholder agar scrollbar
-     tetap stabil dan tidak ada CLS saat section di-skip rendernya. */
   .cv-auto {
     content-visibility: auto;
     contain-intrinsic-size: 1px 720px;
@@ -333,21 +356,19 @@ body.dg-scroll-lock {
 }
 
 /* =============================================================
-   HERO ANIMATION — initial hidden state
+   HERO ANIMATION
    ============================================================= */
 .hero-anim-pending {
   opacity: 0;
 }
 
 /* =============================================================
-   SCROLL REVEAL ANIMATIONS — subtle & elegant
+   SCROLL REVEAL ANIMATIONS
    ============================================================= */
 .reveal {
   transition-property: opacity, transform, filter;
   transition-duration: 700ms;
   transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  /* OPTIMASI: jangan set will-change global — terlalu agresif.
-     Browser akan otomatis menanganinya untuk transition. */
 }
 
 .reveal.reveal-in {
@@ -383,7 +404,6 @@ body.dg-scroll-lock {
     transition: none !important;
   }
 
-  /* OPTIMASI: matikan scroll smooth saat reduced-motion */
   html {
     scroll-behavior: auto !important;
   }

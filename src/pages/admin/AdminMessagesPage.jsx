@@ -70,7 +70,7 @@ export default function AdminMessagesPage() {
         title="Messages"
         description="Submissions from your contact form."
         actions={
-          <div className="inline-flex rounded-full bg-[#161616] border border-white/[0.08] p-1">
+          <div className="inline-flex rounded-full glass-panel p-1">
             <button
               onClick={() => setFilter('all')}
               className={cn(
@@ -96,14 +96,14 @@ export default function AdminMessagesPage() {
       {isLoading ? (
         <p className="text-white/50 text-sm">Loading…</p>
       ) : items.length === 0 ? (
-        <div className="rounded-2xl border border-white/[0.06] bg-[#161616] p-12 text-center">
+        <div className="rounded-2xl glass-panel p-12 text-center">
           <Mail className="h-8 w-8 text-white/30 mx-auto mb-3" />
           <p className="text-sm text-white/40">
             {filter === 'unread' ? 'No unread messages.' : 'No messages yet.'}
           </p>
         </div>
       ) : (
-        <div className="rounded-2xl border border-white/[0.06] bg-[#161616] divide-y divide-white/[0.05] overflow-hidden">
+        <div className="rounded-2xl glass-panel divide-y divide-white/[0.05] overflow-hidden">
           {items.map((m) => (
             <button
               key={m.id}
@@ -143,7 +143,7 @@ export default function AdminMessagesPage() {
       {openMsg && (
         <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center px-4 py-8 overflow-y-auto">
           <button aria-label="Close" onClick={() => setOpenMsg(null)} className="fixed inset-0 bg-black/70 backdrop-blur-sm" />
-          <div className="relative w-full max-w-2xl rounded-2xl bg-[#161616] border border-white/10 shadow-2xl">
+          <div className="relative w-full max-w-2xl rounded-2xl glass-panel border border-white/10 shadow-2xl">
             <div className="px-6 sm:px-7 py-5 border-b border-white/[0.06] flex items-center justify-between gap-4">
               <div className="min-w-0">
                 <h3 className="font-display text-lg font-semibold text-white truncate">

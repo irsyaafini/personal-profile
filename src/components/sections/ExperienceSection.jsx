@@ -27,13 +27,13 @@ function TimelineItem({ item, last, t }) {
 
   return (
     <div className="relative pl-12 sm:pl-16">
-      {/* dot */}
-      <span className="absolute left-3 sm:left-5 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--c-card)] border border-white/15 ring-4 ring-[var(--c-bg)]">
+      {/* dot — glass style */}
+      <span className="absolute left-3 sm:left-5 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.05] backdrop-blur border border-white/15 ring-4 ring-[var(--c-bg)]">
         <Icon className="h-3.5 w-3.5 text-white/80" />
       </span>
       {/* line */}
       {!last && (
-        <span className="absolute left-[26px] sm:left-[34px] top-9 bottom-[-2.5rem] w-px bg-gradient-to-b from-white/15 to-transparent" />
+        <span className="absolute left-[26px] sm:left-[34px] top-9 bottom-[-2.5rem] w-px bg-gradient-to-b from-white/12 to-transparent" />
       )}
 
       <Card>
@@ -109,10 +109,6 @@ export function ExperienceSection() {
               </Card>
             </Reveal>
           ) : (
-            // Timeline items: tiap item slide dari kiri dengan stagger.
-            // Pakai delay manual berdasarkan index, BUKAN RevealGroup,
-            // karena tiap item sudah punya wrapper relative-positioned
-            // untuk dot/line — kita tidak mau menambah div pembungkus.
             items.map((it, i) => (
               <Reveal
                 key={it.id}

@@ -65,13 +65,13 @@ export default function AdminSkillsPage() {
       {isLoading ? (
         <p className="text-white/50 text-sm">Loading…</p>
       ) : items.length === 0 ? (
-        <div className="rounded-2xl border border-white/[0.06] bg-[#161616] p-10 text-center text-sm text-white/40">
+        <div className="rounded-2xl glass-panel p-10 text-center text-sm text-white/40">
           No skills yet.
         </div>
       ) : (
         <div className="space-y-6">
           {Object.entries(grouped).map(([cat, list]) => (
-            <div key={cat} className="rounded-2xl border border-white/[0.06] bg-[#161616] overflow-hidden">
+            <div key={cat} className="rounded-2xl glass-panel overflow-hidden">
               <div className="px-5 sm:px-6 py-3.5 border-b border-white/[0.06] flex items-center gap-2.5">
                 <Code2 className="h-3.5 w-3.5 text-white/55" />
                 <h3 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/65">
@@ -180,7 +180,7 @@ function SkillForm({ initial, onClose, onSaved, onError }) {
   return (
     <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center px-4 py-8 overflow-y-auto">
       <button aria-label="Close" onClick={onClose} className="fixed inset-0 bg-black/70 backdrop-blur-sm" />
-      <div className="relative w-full max-w-md rounded-2xl bg-[#161616] border border-white/10 shadow-2xl">
+      <div className="relative w-full max-w-md rounded-2xl glass-panel border border-white/10 shadow-2xl">
         <div className="px-6 py-5 border-b border-white/[0.06] flex items-center justify-between">
           <h3 className="font-display text-lg font-semibold text-white">
             {isEdit ? 'Edit skill' : 'New skill'}

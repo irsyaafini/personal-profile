@@ -4,17 +4,6 @@ import { Navbar } from './Navbar'
 import { Footer } from './Footer'
 import { IntroScreen } from '@/components/common/IntroScreen'
 
-/**
- * RootLayout (OPTIMIZED)
- *
- * ── PERUBAHAN OPTIMASI LIGHTHOUSE ─────────────────────────────────────────
- * 1. PAINT/TBT — Ambient blob glow tetap ada tapi sudah punya
- *    will-change:transform di .blob (lihat index.css), jadi cuma di-rasterize
- *    sekali dan dimainkan oleh GPU compositor — tidak repaint per frame.
- * 2. CLS — main wrapper diberi `min-height` untuk reservasi ruang konten.
- * 3. Scroll restoration tetap di belakang biar kerja normal antar page.
- */
-
 const hasSeenIntro = () => {
   try { return sessionStorage.getItem('intro-seen') === '1' }
   catch { return false }
@@ -36,34 +25,48 @@ export function RootLayout() {
   return (
     <div className="relative min-h-screen flex flex-col bg-noise">
 
-      {/* Intro curtain — hanya saat session baru */}
+      {/* Intro curtain */}
       {introVisible && (
         <IntroScreen onComplete={handleIntroComplete} />
       )}
 
-      {/* Ambient atmospheric glows — pure decorative, tidak interaktif */}
+      {/* Atmospheric glows — richer multi-point lighting */}
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
       >
+        {/* Top right warm glow */}
         <div
           className="blob"
           style={{
-            top: '-15%',
-            right: '-10%',
-            width: '36rem',
-            height: '36rem',
-            background: 'radial-gradient(circle, rgba(255,255,255,0.04), transparent 60%)',
+            top: '-10%',
+            right: '-8%',
+            width: '42rem',
+            height: '42rem',
+            background: 'radial-gradient(circle, rgba(255,255,255,0.05), transparent 55%)',
           }}
         />
+        {/* Bottom left cool glow */}
         <div
           className="blob"
           style={{
-            bottom: '-20%',
-            left: '-15%',
-            width: '32rem',
-            height: '32rem',
-            background: 'radial-gradient(circle, rgba(255,255,255,0.025), transparent 60%)',
+            bottom: '-18%',
+            left: '-12%',
+            width: '38rem',
+            height: '38rem',
+            background: 'radial-gradient(circle, rgba(255,255,255,0.03), transparent 55%)',
+          }}
+        />
+        {/* Center ambient very subtle */}
+        <div
+          className="blob"
+          style={{
+            top: '40%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '60rem',
+            height: '30rem',
+            background: 'radial-gradient(ellipse, rgba(255,255,255,0.015), transparent 65%)',
           }}
         />
       </div>

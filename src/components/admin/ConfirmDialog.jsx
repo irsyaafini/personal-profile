@@ -1,15 +1,8 @@
 import { useEffect } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import GlassSurface from '@/components/reactbits/GlassSurface'
 
-/**
- * TEMA FIX (ConfirmDialog):
- * 1. Warning icon bg: `bg-rose-500/15 border-rose-500/30 text-rose-300`
- *    → `bg-white/[0.06] border-white/20 text-white/70` (monokrom)
- * 2. Confirm button: `bg-rose-500 hover:bg-rose-600 border-rose-500`
- *    → `bg-white/[0.08] hover:bg-white/[0.14] border-white/20 text-white`
- *    Destruktif dibedakan lewat konten label ("Delete"), bukan warna merah.
- */
 export function ConfirmDialog({
   open,
   title       = 'Are you sure?',
@@ -39,14 +32,29 @@ export function ConfirmDialog({
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
       />
 
+      {/* Dialog — GlassSurface */}
       <div
         role="dialog"
         aria-modal="true"
-        className="relative w-full max-w-md rounded-2xl bg-[#161616] border border-white/10 shadow-2xl"
+        className="relative w-full max-w-md"
       >
-        <div className="p-6 sm:p-7">
+        <GlassSurface
+          width="100%"
+          height="100%"
+          borderRadius={20}
+          brightness={46}
+          opacity={0.92}
+          blur={14}
+          backgroundOpacity={0.04}
+          distortionScale={-130}
+          redOffset={0}
+          greenOffset={8}
+          blueOffset={16}
+          className="!absolute inset-0"
+          style={{ position: 'absolute', inset: 0, zIndex: 0, width: '100%', height: '100%', borderRadius: 20 }}
+        />
+        <div className="relative z-10 p-6 sm:p-7">
           <div className="flex items-start gap-3">
-            {/* Icon — monokrom, tidak lagi merah */}
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white/[0.06] border border-white/20 text-white/70 shrink-0">
               <AlertTriangle className="h-5 w-5" />
             </span>
@@ -60,7 +68,6 @@ export function ConfirmDialog({
             <Button variant="ghost" onClick={onCancel} disabled={busy}>
               {cancelLabel}
             </Button>
-            {/* Confirm button — monokrom, diferensiasi lewat teks bukan warna */}
             <button
               type="button"
               onClick={onConfirm}

@@ -13,7 +13,7 @@ function InfoRow({ icon: Icon, label, value, href }) {
   if (!value) return null
   const content = (
     <>
-      <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.04] border border-white/10 text-white/80 shrink-0 transition group-hover:bg-white/[0.08] group-hover:border-white/20">
+      <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.05] border border-white/10 text-white/80 shrink-0 transition group-hover:bg-white/[0.09] group-hover:border-white/20 backdrop-blur-sm">
         <Icon className="h-4 w-4" />
       </span>
       <div className="min-w-0">
@@ -47,7 +47,6 @@ export function AboutSection() {
   return (
     <section id="about" className="section-gap">
       <Container>
-        {/* Heading muncul lebih dulu */}
         <Reveal direction="up">
           <SectionHeader
             eyebrow={t('sections.personal_info', 'Personal Info')}
@@ -57,7 +56,7 @@ export function AboutSection() {
         </Reveal>
 
         <div className="mt-8 sm:mt-10 grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Personal data card — slide dari kiri sedikit */}
+          {/* Personal data card */}
           <Reveal direction="up" delay={120} className="lg:col-span-2">
             <Card>
               <div className="p-5 sm:p-6">
@@ -99,7 +98,7 @@ export function AboutSection() {
             </Card>
           </Reveal>
 
-          {/* Interests card — masuk setelah card utama */}
+          {/* Interests card */}
           <Reveal direction="up" delay={220}>
             <Card>
               <div className="p-5 sm:p-6">

@@ -98,7 +98,7 @@ export default function AdminProfilePage() {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Avatar */}
-        <section className="rounded-2xl bg-[#161616] border border-white/[0.06] p-6 sm:p-7">
+        <section className="rounded-2xl glass-panel p-6 sm:p-7">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/55 mb-5">
             Avatar
           </h2>
@@ -111,7 +111,7 @@ export default function AdminProfilePage() {
         </section>
 
         {/* Identity */}
-        <section className="rounded-2xl bg-[#161616] border border-white/[0.06] p-6 sm:p-7 space-y-5">
+        <section className="rounded-2xl glass-panel p-6 sm:p-7 space-y-5">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/55">
             Identity
           </h2>
@@ -132,7 +132,7 @@ export default function AdminProfilePage() {
         </section>
 
         {/* Contact */}
-        <section className="rounded-2xl bg-[#161616] border border-white/[0.06] p-6 sm:p-7 space-y-5">
+        <section className="rounded-2xl glass-panel p-6 sm:p-7 space-y-5">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/55">
             Contact
           </h2>
@@ -161,7 +161,7 @@ export default function AdminProfilePage() {
         </section>
 
         {/* Languages & Interests */}
-        <section className="rounded-2xl bg-[#161616] border border-white/[0.06] p-6 sm:p-7 space-y-5">
+        <section className="rounded-2xl glass-panel p-6 sm:p-7 space-y-5">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/55">
             Languages & Interests
           </h2>
@@ -184,7 +184,7 @@ export default function AdminProfilePage() {
         </section>
 
         {/* Socials */}
-        <section className="rounded-2xl bg-[#161616] border border-white/[0.06] p-6 sm:p-7 space-y-5">
+        <section className="rounded-2xl glass-panel p-6 sm:p-7 space-y-5">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/55">
             Social Links
           </h2>

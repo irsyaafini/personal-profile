@@ -9,6 +9,29 @@ import { Reveal } from '@/components/common/Reveal'
 import { useSendMessage } from '@/features/messages/useSendMessage'
 import { useProfile } from '@/features/profile/useProfile'
 import { useTranslation } from '@/features/i18n/useTranslation'
+import GlassSurface from '@/components/reactbits/GlassSurface'
+
+function ContactInfoItem({ icon: Icon, label, value, href }) {
+  const inner = (
+    <>
+      <span className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-white/[0.05] border border-white/10 text-white/85 transition group-hover:bg-white/[0.09] group-hover:border-white/20 backdrop-blur-sm">
+        <Icon className="h-4 w-4" />
+      </span>
+      <div>
+        <p className="text-[10px] uppercase tracking-[0.18em] text-white/40 font-semibold">{label}</p>
+        <p className="text-sm text-white/85 group-hover:text-white transition">{value}</p>
+      </div>
+    </>
+  )
+  if (href) {
+    return (
+      <a href={href} className="flex items-center gap-3.5 group">
+        {inner}
+      </a>
+    )
+  }
+  return <div className="flex items-center gap-3.5">{inner}</div>
+}
 
 export function ContactSection() {
   const { t } = useTranslation()
@@ -58,7 +81,7 @@ export function ContactSection() {
         </Reveal>
 
         <div className="mt-8 sm:mt-10 grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* ── Info card — slide dari kiri ──────────────────────── */}
+          {/* Info cards */}
           <Reveal direction="left" delay={120} className="lg:col-span-2">
             <div className="space-y-4">
               <Card>
@@ -67,52 +90,29 @@ export function ContactSection() {
                     <span className="h-px w-6 bg-white/30" />
                     {t('contact.reach_me_at', 'Reach me at')}
                   </h3>
-
                   <div className="space-y-5">
                     {profile?.email && (
-                      <a href={`mailto:${profile.email}`} className="flex items-center gap-3.5 group">
-                        <span className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-white/[0.04] border border-white/10 text-white/85 transition group-hover:bg-white/[0.08] group-hover:border-white/20">
-                          <Mail className="h-4 w-4" />
-                        </span>
-                        <div>
-                          <p className="text-[10px] uppercase tracking-[0.18em] text-white/40 font-semibold">
-                            {t('about.email', 'Email')}
-                          </p>
-                          <p className="text-sm text-white/85 group-hover:text-white transition">
-                            {profile.email}
-                          </p>
-                        </div>
-                      </a>
+                      <ContactInfoItem
+                        icon={Mail}
+                        label={t('about.email', 'Email')}
+                        value={profile.email}
+                        href={`mailto:${profile.email}`}
+                      />
                     )}
-
                     {profile?.phone && (
-                      <a href={`tel:${profile.phone}`} className="flex items-center gap-3.5 group">
-                        <span className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-white/[0.04] border border-white/10 text-white/85 transition group-hover:bg-white/[0.08] group-hover:border-white/20">
-                          <Phone className="h-4 w-4" />
-                        </span>
-                        <div>
-                          <p className="text-[10px] uppercase tracking-[0.18em] text-white/40 font-semibold">
-                            {t('about.phone', 'Phone')}
-                          </p>
-                          <p className="text-sm text-white/85 group-hover:text-white transition">
-                            {profile.phone}
-                          </p>
-                        </div>
-                      </a>
+                      <ContactInfoItem
+                        icon={Phone}
+                        label={t('about.phone', 'Phone')}
+                        value={profile.phone}
+                        href={`tel:${profile.phone}`}
+                      />
                     )}
-
                     {profile?.location && (
-                      <div className="flex items-center gap-3.5">
-                        <span className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-white/[0.04] border border-white/10 text-white/85">
-                          <MapPin className="h-4 w-4" />
-                        </span>
-                        <div>
-                          <p className="text-[10px] uppercase tracking-[0.18em] text-white/40 font-semibold">
-                            {t('about.location', 'Location')}
-                          </p>
-                          <p className="text-sm text-white/85">{profile.location}</p>
-                        </div>
-                      </div>
+                      <ContactInfoItem
+                        icon={MapPin}
+                        label={t('about.location', 'Location')}
+                        value={profile.location}
+                      />
                     )}
                   </div>
                 </div>
@@ -130,7 +130,7 @@ export function ContactSection() {
             </div>
           </Reveal>
 
-          {/* ── Form card — slide dari kanan ─────────────────────── */}
+          {/* Form card */}
           <Reveal direction="right" delay={220} className="lg:col-span-3">
             <Card>
               <form onSubmit={handleSubmit} className="p-6 sm:p-7 space-y-6">
@@ -185,14 +185,14 @@ export function ContactSection() {
                 </div>
 
                 {submitted && (
-                  <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl border border-white/15 bg-white/[0.04] text-sm text-white/85">
+                  <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl border border-white/12 bg-white/[0.04] backdrop-blur text-sm text-white/85">
                     <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
                     <span>{t('contact.success', 'Thanks! Your message has been sent.')}</span>
                   </div>
                 )}
 
                 {sendMessage.isError && (
-                  <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl border border-white/20 bg-white/[0.03] text-sm text-white/60">
+                  <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur text-sm text-white/60">
                     <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
                     <span>{t('contact.error', 'Something went wrong. Please try again.')}</span>
                   </div>

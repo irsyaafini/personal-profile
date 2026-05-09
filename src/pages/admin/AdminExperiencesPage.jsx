@@ -72,7 +72,7 @@ export default function AdminExperiencesPage() {
       {isLoading ? (
         <p className="text-white/50 text-sm">Loading…</p>
       ) : items.length === 0 ? (
-        <div className="rounded-2xl border border-white/[0.06] bg-[#161616] p-10 text-center text-sm text-white/40">
+        <div className="rounded-2xl glass-panel p-10 text-center text-sm text-white/40">
           No experiences yet. Click <span className="text-white">Add new</span> to create the first one.
         </div>
       ) : (
@@ -82,7 +82,7 @@ export default function AdminExperiencesPage() {
             return (
               <div
                 key={it.id}
-                className="rounded-2xl border border-white/[0.06] bg-[#161616] p-5 sm:p-6 flex items-start gap-4"
+                className="rounded-2xl glass-panel p-5 sm:p-6 flex items-start gap-4"
               >
                 <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white/[0.04] border border-white/10 text-white/85 shrink-0">
                   <Icon className="h-4 w-4" />
@@ -197,7 +197,7 @@ function ExperienceForm({ initial, onClose, onSaved, onError }) {
   return (
     <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center px-4 py-8 overflow-y-auto">
       <button aria-label="Close" onClick={onClose} className="fixed inset-0 bg-black/70 backdrop-blur-sm" />
-      <div className="relative w-full max-w-2xl rounded-2xl bg-[#161616] border border-white/10 shadow-2xl">
+      <div className="relative w-full max-w-2xl rounded-2xl glass-panel border border-white/10 shadow-2xl">
         <div className="px-6 sm:px-7 py-5 border-b border-white/[0.06] flex items-center justify-between">
           <h3 className="font-display text-lg font-semibold text-white">
             {isEdit ? 'Edit experience' : 'New experience'}

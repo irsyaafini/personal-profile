@@ -17,9 +17,9 @@ function SkillBar({ name, level = 0 }) {
         <span className="text-sm text-white/85">{name}</span>
         <span className="text-[10px] text-white/40 font-mono tracking-wider">{pct}%</span>
       </div>
-      <div className="h-1 rounded-full bg-white/[0.05] overflow-hidden">
+      <div className="h-1 rounded-full bg-white/[0.06] overflow-hidden">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-white/90 to-white/50 transition-all duration-700"
+          className="h-full rounded-full bg-gradient-to-r from-white/90 to-white/45 transition-all duration-700"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -34,7 +34,6 @@ export function SkillsSection() {
     queryFn: () => skillsService.list(),
   })
 
-  // group by category
   const grouped = (skills ?? []).reduce((acc, skill) => {
     const cat = skill.category || 'Other'
     if (!acc[cat]) acc[cat] = []
@@ -79,7 +78,6 @@ export function SkillsSection() {
             </Reveal>
           </div>
         ) : (
-          // Cards di-stagger pakai RevealGroup
           <RevealGroup
             stagger={100}
             baseDelay={120}
