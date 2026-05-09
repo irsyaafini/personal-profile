@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useCallback } from 'react'
-import { useGesture } from '@use-gesture/react'
 
 const DEFAULT_IMAGES = [
   {
@@ -29,10 +28,11 @@ const DEFAULT_IMAGES = [
 ]
 
 const DEFAULTS = {
-  maxVerticalRotationDeg: 5,
-  dragSensitivity: 20,
   enlargeTransitionMs: 300,
   segments: 35,
+  // Auto-rotation defaults
+  autoRotate: true,
+  autoRotateSpeed: 0.06,
 }
 
 const clamp = (v, min, max) => Math.min(Math.max(v, min), max)
@@ -115,16 +115,16 @@ export default function DomeGallery({
   maxRadius = Infinity,
   padFactor = 0.25,
   overlayBlurColor = '#120F17',
-  maxVerticalRotationDeg = DEFAULTS.maxVerticalRotationDeg,
-  dragSensitivity = DEFAULTS.dragSensitivity,
   enlargeTransitionMs = DEFAULTS.enlargeTransitionMs,
   segments = DEFAULTS.segments,
-  dragDampening = 2,
   openedImageWidth = '400px',
   openedImageHeight = '400px',
   imageBorderRadius = '30px',
   openedImageBorderRadius = '30px',
   grayscale = true,
+  // ─── Props auto-rotation ──────────────────────────────────────────────────
+  autoRotate = DEFAULTS.autoRotate,
+  autoRotateSpeed = DEFAULTS.autoRotateSpeed,
 }) {
   const rootRef = useRef(null)
   const mainRef = useRef(null)
@@ -136,17 +136,13 @@ export default function DomeGallery({
   const originalTilePositionRef = useRef(null)
 
   const rotationRef = useRef({ x: 0, y: 0 })
-  const startRotRef = useRef({ x: 0, y: 0 })
-  const startPosRef = useRef(null)
-  const draggingRef = useRef(false)
-  const cancelTapRef = useRef(false)
-  const movedRef = useRef(false)
-  const inertiaRAF = useRef(null)
-  const pointerTypeRef = useRef('mouse')
-  const tapTargetRef = useRef(null)
   const openingRef = useRef(false)
   const openStartedAtRef = useRef(0)
-  const lastDragEndAt = useRef(0)
+
+  // ─── Refs untuk auto-rotation ─────────────────────────────────────────────
+  const autoRotatingRef = useRef(false)
+  const autoRotatePausedRef = useRef(false) // true saat foto sedang dibuka/preview
+  const autoRotateRAF = useRef(null)
 
   const scrollLockedRef = useRef(false)
   const lockScroll = useCallback(() => {
@@ -169,6 +165,69 @@ export default function DomeGallery({
       el.style.transform = `translateZ(calc(var(--radius) * -1)) rotateX(${xDeg}deg) rotateY(${yDeg}deg)`
     }
   }
+
+  // ─── Auto-Rotation ─────────────────────────────────────────────────────────
+  /**
+   * stopAutoRotate — hentikan loop requestAnimationFrame auto-rotate.
+   * Tidak mengubah autoRotatePausedRef, jadi bisa dipanggil saat drag
+   * tanpa mengunci resume permanen.
+   */
+  const stopAutoRotate = useCallback(() => {
+    if (autoRotateRAF.current) {
+      cancelAnimationFrame(autoRotateRAF.current)
+      autoRotateRAF.current = null
+    }
+    autoRotatingRef.current = false
+  }, [])
+
+  /**
+   * startAutoRotate — mulai loop auto-rotate.
+   * Loop akan skip frame selama:
+   *  - foto sedang dibuka/preview (autoRotatePausedRef.current)
+   */
+  const startAutoRotate = useCallback(() => {
+    if (!autoRotate) return
+    if (autoRotatingRef.current) return // sudah berjalan
+    autoRotatingRef.current = true
+
+    const tick = () => {
+      if (!autoRotatePausedRef.current) {
+        const nextY = wrapAngleSigned(rotationRef.current.y + autoRotateSpeed)
+        rotationRef.current = { ...rotationRef.current, y: nextY }
+        applyTransform(rotationRef.current.x, nextY)
+      }
+      autoRotateRAF.current = requestAnimationFrame(tick)
+    }
+
+    autoRotateRAF.current = requestAnimationFrame(tick)
+  }, [autoRotate, autoRotateSpeed])
+
+  /**
+   * pauseAutoRotateForever — dipanggil saat foto dibuka.
+   * Set autoRotatePausedRef = true sehingga loop tidak memutar sphere.
+   * Auto-rotate akan TETAP BERHENTI sampai foto ditutup.
+   */
+  const pauseAutoRotateForever = useCallback(() => {
+    autoRotatePausedRef.current = true
+  }, [])
+
+  /**
+   * resumeAutoRotate — dipanggil saat foto ditutup.
+   * Reset autoRotatePausedRef = false → loop auto-rotate akan berjalan lagi.
+   */
+  const resumeAutoRotate = useCallback(() => {
+    autoRotatePausedRef.current = false
+  }, [])
+
+  // ─── Mulai auto-rotate saat mount ─────────────────────────────────────────
+  useEffect(() => {
+    if (autoRotate) {
+      startAutoRotate()
+    }
+    return () => {
+      stopAutoRotate()
+    }
+  }, [autoRotate, startAutoRotate, stopAutoRotate])
 
   const lockedRadiusRef = useRef(null)
 
@@ -260,139 +319,6 @@ export default function DomeGallery({
     applyTransform(rotationRef.current.x, rotationRef.current.y)
   }, [])
 
-  const stopInertia = useCallback(() => {
-    if (inertiaRAF.current) {
-      cancelAnimationFrame(inertiaRAF.current)
-      inertiaRAF.current = null
-    }
-  }, [])
-
-  const startInertia = useCallback(
-    (vx, vy) => {
-      const MAX_V = 1.4
-      let vX = clamp(vx, -MAX_V, MAX_V) * 80
-      let vY = clamp(vy, -MAX_V, MAX_V) * 80
-      let frames = 0
-      const d = clamp(dragDampening ?? 0.6, 0, 1)
-      const frictionMul = 0.94 + 0.055 * d
-      const stopThreshold = 0.015 - 0.01 * d
-      const maxFrames = Math.round(90 + 270 * d)
-      const step = () => {
-        vX *= frictionMul
-        vY *= frictionMul
-        if (Math.abs(vX) < stopThreshold && Math.abs(vY) < stopThreshold) {
-          inertiaRAF.current = null
-          return
-        }
-        if (++frames > maxFrames) {
-          inertiaRAF.current = null
-          return
-        }
-        const nextX = clamp(
-          rotationRef.current.x - vY / 200,
-          -maxVerticalRotationDeg,
-          maxVerticalRotationDeg
-        )
-        const nextY = wrapAngleSigned(rotationRef.current.y + vX / 200)
-        rotationRef.current = { x: nextX, y: nextY }
-        applyTransform(nextX, nextY)
-        inertiaRAF.current = requestAnimationFrame(step)
-      }
-      stopInertia()
-      inertiaRAF.current = requestAnimationFrame(step)
-    },
-    [dragDampening, maxVerticalRotationDeg, stopInertia]
-  )
-
-  useGesture(
-    {
-      onDragStart: ({ event }) => {
-        if (focusedElRef.current) return
-        stopInertia()
-
-        pointerTypeRef.current = event.pointerType || 'mouse'
-        if (pointerTypeRef.current === 'touch') event.preventDefault()
-        if (pointerTypeRef.current === 'touch') lockScroll()
-        draggingRef.current = true
-        cancelTapRef.current = false
-        movedRef.current = false
-        startRotRef.current = { ...rotationRef.current }
-        startPosRef.current = { x: event.clientX, y: event.clientY }
-        const potential = event.target.closest?.('.item__image')
-        tapTargetRef.current = potential || null
-      },
-      onDrag: ({ event, last, velocity: velArr = [0, 0], direction: dirArr = [0, 0], movement }) => {
-        if (focusedElRef.current || !draggingRef.current || !startPosRef.current) return
-
-        if (pointerTypeRef.current === 'touch') event.preventDefault()
-
-        const dxTotal = event.clientX - startPosRef.current.x
-        const dyTotal = event.clientY - startPosRef.current.y
-
-        if (!movedRef.current) {
-          const dist2 = dxTotal * dxTotal + dyTotal * dyTotal
-          if (dist2 > 16) movedRef.current = true
-        }
-
-        const nextX = clamp(
-          startRotRef.current.x - dyTotal / dragSensitivity,
-          -maxVerticalRotationDeg,
-          maxVerticalRotationDeg
-        )
-        const nextY = startRotRef.current.y + dxTotal / dragSensitivity
-
-        const cur = rotationRef.current
-        if (cur.x !== nextX || cur.y !== nextY) {
-          rotationRef.current = { x: nextX, y: nextY }
-          applyTransform(nextX, nextY)
-        }
-
-        if (last) {
-          draggingRef.current = false
-          let isTap = false
-
-          if (startPosRef.current) {
-            const dx = event.clientX - startPosRef.current.x
-            const dy = event.clientY - startPosRef.current.y
-            const dist2 = dx * dx + dy * dy
-            const TAP_THRESH_PX = pointerTypeRef.current === 'touch' ? 10 : 6
-            if (dist2 <= TAP_THRESH_PX * TAP_THRESH_PX) {
-              isTap = true
-            }
-          }
-
-          let [vMagX, vMagY] = velArr
-          const [dirX, dirY] = dirArr
-          let vx = vMagX * dirX
-          let vy = vMagY * dirY
-
-          if (!isTap && Math.abs(vx) < 0.001 && Math.abs(vy) < 0.001 && Array.isArray(movement)) {
-            const [mx, my] = movement
-            vx = (mx / dragSensitivity) * 0.02
-            vy = (my / dragSensitivity) * 0.02
-          }
-
-          if (!isTap && (Math.abs(vx) > 0.005 || Math.abs(vy) > 0.005)) {
-            startInertia(vx, vy)
-          }
-          startPosRef.current = null
-          cancelTapRef.current = !isTap
-
-          if (isTap && tapTargetRef.current && !focusedElRef.current) {
-            openItemFromElement(tapTargetRef.current)
-          }
-          tapTargetRef.current = null
-
-          if (cancelTapRef.current) setTimeout(() => (cancelTapRef.current = false), 120)
-          if (movedRef.current) lastDragEndAt.current = performance.now()
-          movedRef.current = false
-          if (pointerTypeRef.current === 'touch') unlockScroll()
-        }
-      },
-    },
-    { target: mainRef, eventOptions: { passive: false } }
-  )
-
   useEffect(() => {
     const scrim = scrimRef.current
     if (!scrim) return
@@ -418,6 +344,8 @@ export default function DomeGallery({
         focusedElRef.current = null
         rootRef.current?.removeAttribute('data-enlarging')
         openingRef.current = false
+        // ── Resume auto-rotate setelah foto ditutup ──────────────────────────
+        resumeAutoRotate()
         return
       }
 
@@ -505,11 +433,11 @@ export default function DomeGallery({
                 el.style.transition = ''
                 el.style.opacity = ''
                 openingRef.current = false
-                if (
-                  !draggingRef.current &&
-                  rootRef.current?.getAttribute('data-enlarging') !== 'true'
-                )
+                if (rootRef.current?.getAttribute('data-enlarging') !== 'true')
                   document.body.classList.remove('dg-scroll-lock')
+
+                // ── Resume auto-rotate setelah animasi tutup selesai ─────────
+                resumeAutoRotate()
               }, 300)
             })
           })
@@ -529,12 +457,16 @@ export default function DomeGallery({
       scrim.removeEventListener('click', close)
       window.removeEventListener('keydown', onKey)
     }
-  }, [enlargeTransitionMs, openedImageBorderRadius, grayscale])
+  }, [enlargeTransitionMs, openedImageBorderRadius, grayscale, resumeAutoRotate])
 
   const openItemFromElement = (el) => {
     if (openingRef.current) return
     openingRef.current = true
     openStartedAtRef.current = performance.now()
+
+    // ── Pause auto-rotate permanen saat foto dibuka ───────────────────────────
+    pauseAutoRotateForever()
+
     lockScroll()
     const parent = el.parentElement
     focusedElRef.current = el
@@ -571,6 +503,8 @@ export default function DomeGallery({
       focusedElRef.current = null
       parent.removeChild(refDiv)
       unlockScroll()
+      // Gagal buka foto → resume auto-rotate
+      resumeAutoRotate()
       return
     }
 
@@ -771,8 +705,9 @@ export default function DomeGallery({
           ref={mainRef}
           className="absolute inset-0 grid place-items-center overflow-hidden select-none bg-transparent"
           style={{
-            touchAction: 'none',
+            touchAction: 'auto',
             WebkitUserSelect: 'none',
+            cursor: 'default',
           }}
         >
           <div className="stage">
@@ -804,17 +739,11 @@ export default function DomeGallery({
                     tabIndex={0}
                     aria-label={it.alt || 'Open image'}
                     onClick={(e) => {
-                      if (draggingRef.current) return
-                      if (movedRef.current) return
-                      if (performance.now() - lastDragEndAt.current < 80) return
                       if (openingRef.current) return
                       openItemFromElement(e.currentTarget)
                     }}
                     onPointerUp={(e) => {
                       if (e.pointerType !== 'touch') return
-                      if (draggingRef.current) return
-                      if (movedRef.current) return
-                      if (performance.now() - lastDragEndAt.current < 80) return
                       if (openingRef.current) return
                       openItemFromElement(e.currentTarget)
                     }}

@@ -13,14 +13,14 @@ function InfoRow({ icon: Icon, label, value, href }) {
   if (!value) return null
   const content = (
     <>
-      <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white/[0.04] border border-white/10 text-white/80 shrink-0 transition group-hover:bg-white/[0.08] group-hover:border-white/20">
+      <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.04] border border-white/10 text-white/80 shrink-0 transition group-hover:bg-white/[0.08] group-hover:border-white/20">
         <Icon className="h-4 w-4" />
       </span>
       <div className="min-w-0">
         <p className="text-[10px] uppercase tracking-[0.18em] text-white/40 font-semibold">
           {label}
         </p>
-        <p className="mt-1 text-sm text-white/85 truncate">{value}</p>
+        <p className="mt-0.5 text-sm text-white/85 truncate">{value}</p>
       </div>
     </>
   )
@@ -29,7 +29,7 @@ function InfoRow({ icon: Icon, label, value, href }) {
     return (
       <a
         href={href}
-        className="flex items-center gap-3.5 group hover:text-white transition"
+        className="flex items-center gap-3 py-3.5 group hover:text-white transition"
         target={href.startsWith('http') ? '_blank' : undefined}
         rel="noreferrer"
       >
@@ -37,7 +37,7 @@ function InfoRow({ icon: Icon, label, value, href }) {
       </a>
     )
   }
-  return <div className="flex items-center gap-3.5 group">{content}</div>
+  return <div className="flex items-center gap-3 py-3.5 group">{content}</div>
 }
 
 export function AboutSection() {
@@ -60,16 +60,16 @@ export function AboutSection() {
           {/* Personal data card — slide dari kiri sedikit */}
           <Reveal direction="up" delay={120} className="lg:col-span-2">
             <Card>
-              <div className="p-6 sm:p-7">
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/50 mb-5 flex items-center gap-2.5">
+              <div className="p-5 sm:p-6">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/50 mb-4 flex items-center gap-2.5">
                   <span className="h-px w-6 bg-white/30" />
                   {t('sections.personal_info', 'Personal Info')}
                 </h3>
 
                 {isLoading ? (
-                  <div className="grid sm:grid-cols-2 gap-5">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <Skeleton key={i} className="h-14" />
+                  <div className="flex flex-col gap-4">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Skeleton key={i} className="h-11" />
                     ))}
                   </div>
                 ) : (
@@ -77,7 +77,7 @@ export function AboutSection() {
                     stagger={60}
                     baseDelay={200}
                     direction="up"
-                    className="grid sm:grid-cols-2 gap-x-8 gap-y-6"
+                    className="flex flex-col divide-y divide-white/[0.05]"
                   >
                     <InfoRow icon={Mail} label={t('about.email', 'Email')} value={profile?.email} href={profile?.email && `mailto:${profile.email}`} />
                     <InfoRow icon={Phone} label={t('about.phone', 'Phone')} value={profile?.phone} href={profile?.phone && `tel:${profile.phone}`} />
@@ -102,8 +102,8 @@ export function AboutSection() {
           {/* Interests card — masuk setelah card utama */}
           <Reveal direction="up" delay={220}>
             <Card>
-              <div className="p-6 sm:p-7">
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/50 mb-5 flex items-center gap-2.5">
+              <div className="p-5 sm:p-6">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/50 mb-4 flex items-center gap-2.5">
                   <Heart className="h-3.5 w-3.5 text-white/70" />
                   {t('about.interests', 'Interests')}
                 </h3>
